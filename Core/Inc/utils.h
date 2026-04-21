@@ -14,7 +14,6 @@ extern int8_t g_message_was_sent;
 extern uint32_t g_fcntup;
 extern int8_t g_eeprom_initialized;
 
-
 void SystemClock_Config(void);
 void EnterShutdownWithWakeUpPinEn(void);
 void EnterShutdownWithBMA(struct AppConfig_s config);
