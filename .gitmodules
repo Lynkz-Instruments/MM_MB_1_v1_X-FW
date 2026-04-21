@@ -4,3 +4,9 @@
 [submodule "Drivers/lib-stm32wl-utils"]
 	path = Drivers/lib-stm32wl-utils
 	url = git@github.com:Lynkz-Instruments/lib-stm32wl-utils.git
+[submodule "Drivers/lib-stm32-uart"]
+	path = Drivers/lib-stm32-uart
+	url = git@github.com:Lynkz-Instruments/lib-stm32-uart.git
+[submodule "Drivers/driver-cat24c32"]
+	path = Drivers/driver-cat24c32
+	url = git@github.com:Lynkz-Instruments/driver-cat24c32.git

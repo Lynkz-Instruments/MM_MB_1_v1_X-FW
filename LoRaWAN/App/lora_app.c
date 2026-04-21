@@ -37,7 +37,7 @@
 
 /* USER CODE BEGIN Includes */
 #include "Region.h"
-#include "cat24c32_api.h"
+#include "app_eeprom.h"
 #include "LoRaMac.h"
 #include "utils.h"
 #include "app_communication.h"
@@ -541,26 +541,17 @@ void SendTxData(void)
     UTIL_TIMER_Time_t nextTxIn = 0;
 
 #ifdef FIRST_BOOT
-    g_fcntup = 0; // Initialize frame count up to 0 on first boot
+    g_fcntup = 0;
 #else
-    if (g_eeprom_initialized == 1){
-		uint8_t buf;
-        for (size_t i = 0; i < sizeof(g_fcntup); i++) {
-            if (CAT24C32_Read(EEPROM_FCNTUP_ADDR + i, &buf, 1) == CAT24C32_OK) {
-                g_fcntup |= ((uint32_t)buf << (8 * i));
-            }
-        }
+    if (g_eeprom_initialized == 1) {
+        g_fcntup = app_eeprom_read_fcntup();
     } else {
         APP_LOG(TS_ON, VLEVEL_L, "Failed to read counter from EEPROM\r\n");
     }
 #endif
 
     g_fcntup++;
-
-    for (size_t i = 0; i < sizeof(g_fcntup); i++) {
-        uint8_t buf = (g_fcntup >> (8 * i)) & 0xFF;
-        CAT24C32_Write(EEPROM_FCNTUP_ADDR + i, &buf, 1);
-    }
+    app_eeprom_write_fcntup(g_fcntup);
 
 	APP_LOG(TS_ON, VLEVEL_L, "FCntUp saved to eeprom: %d\r\n", g_fcntup);
 

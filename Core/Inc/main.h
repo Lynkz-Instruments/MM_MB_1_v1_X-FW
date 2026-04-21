@@ -143,13 +143,9 @@ void LM_Delay(uint32_t delay_ms, uint32_t start_time_ms);
 
 void app_set_device_mode(AppMode_t mode);
 AppMode_t app_get_device_mode(void);
-void app_eeprom_write_mode(uint8_t mode);
-uint8_t app_eeprom_read_mode(void);
 
 void app_set_device_config(struct AppConfig_s config);
 struct AppConfig_s app_get_device_config(void);
-void app_eeprom_write_config(struct AppConfig_s config);
-struct AppConfig_s app_eeprom_read_config(void);
 
 #ifdef __cplusplus
 }

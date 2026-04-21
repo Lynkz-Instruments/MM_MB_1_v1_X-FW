@@ -13,7 +13,7 @@
 #include "main.h"
 #include "bma400.h"
 #include "bma400_api.h"
-#include "cat24c32_api.h"
+#include "app_eeprom.h"
 #include "stm32_uart.h"
 #include "dma.h"
 #include "i2c.h"
@@ -59,10 +59,10 @@ int main(void)
     getResetReason(reset_flags, &reset_reason);
     RCC->CSR |= RCC_CSR_RMVF; // Clear reset flags after reading
 
-    rslt = CAT24C32_Init(&hi2c1, 0);
-    if (rslt != CAT24C32_OK) {
+    rslt = app_eeprom_init();
+    if (rslt != 0) {
         Error_Handler(ERROR_EEPROM_INIT);
-    }else {
+    } else {
         g_eeprom_initialized = 1;
         printf("EEPROM initialized successfully.\r\n");
     }
@@ -190,35 +190,6 @@ AppMode_t app_get_device_mode(void)
     return current_mode;
 }
 
-void app_eeprom_write_mode(uint8_t mode)
-{   
-    int8_t rslt = 0;
-
-    rslt = CAT24C32_Write(EEPROM_DEVICE_MODE_ADDR, &mode, 1);
-
-    if (rslt != CAT24C32_OK) {
-        printf("EEPROM Write Error (Device Mode)!\r\n");
-        Error_Handler(ERROR_EEPROM_WRITE);
-    }
-}
-
-uint8_t app_eeprom_read_mode(void)
-{   
-    int8_t rslt = 0;
-    uint8_t current_mode = 0xFF;
-
-    rslt = CAT24C32_Read(EEPROM_DEVICE_MODE_ADDR, &current_mode, sizeof(current_mode));
-
-    if (rslt != CAT24C32_OK) {
-        printf("EEPROM Read Error (Device Mode)!\r\n");
-        Error_Handler(ERROR_EEPROM_READ);
-        // Default mode when there is an error.
-        return APP_MODE_BEACON;
-    }
-
-    return current_mode;
-}
-
 void app_set_device_config(struct AppConfig_s config)
 {   
     // Validate config (clamping)
@@ -258,29 +229,3 @@ struct AppConfig_s app_get_device_config(void)
     return current_config;
 }
 
-void app_eeprom_write_config(struct AppConfig_s config)
-{
-    int8_t rslt = 0;
-
-    rslt = CAT24C32_Write(EEPROM_DEVICE_CONFIG_ADDR, (uint8_t *)&config, sizeof(struct AppConfig_s));
-
-    if (rslt != CAT24C32_OK) {
-        printf("EEPROM Write Error (Device Config)!\r\n");
-        Error_Handler(ERROR_EEPROM_WRITE);
-    }
-}
-
-struct AppConfig_s app_eeprom_read_config(void)
-{
-    int8_t rslt = 0;
-    struct AppConfig_s config = {0};
-
-    rslt = CAT24C32_Read(EEPROM_DEVICE_CONFIG_ADDR, (uint8_t *)&config, sizeof(struct AppConfig_s));
-
-    if (rslt != CAT24C32_OK) {
-        printf("EEPROM Read Error (Device Mode)!\r\n");
-        Error_Handler(ERROR_EEPROM_READ);
-    }
-
-    return config;
-}

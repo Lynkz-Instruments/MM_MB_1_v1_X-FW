@@ -51,12 +51,13 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/driver-bma400/bma400.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/lib-stm32-uart/stm32_uart.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/lib-stm32wl-utils/stm32wl_utils.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/Lynkz_Library/drivers/cat24c32_api/cat24c32_api.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/driver-cat24c32/cat24c32.c
     ${CMAKE_CURRENT_SOURCE_DIR}/LoRaWAN/App/lora_app.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/
     ${CMAKE_CURRENT_SOURCE_DIR}/Utilities/trace/adv_trace/stm32_adv_trace_if_template.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/utils.c
-     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/app_communication.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/app_communication.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/app_eeprom.c
 )
 
 # Add include paths
@@ -67,7 +68,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/Lynkz_Library/drivers/BMA400/
     ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/Lynkz_Library/drivers/BMA400/BMA400_SensorAPI/
     ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/Lynkz_Library/drivers/stm32_uart/
-    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/Lynkz_Library/drivers/cat24c32_api/
+    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/driver-cat24c32/
     ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/Lynkz_Library/drivers/stm32wl_utils/
     ${CMAKE_CURRENT_SOURCE_DIR}/LoRaWAN/App/
     ${CMAKE_CURRENT_SOURCE_DIR}/Utilities/trace/adv_trace/

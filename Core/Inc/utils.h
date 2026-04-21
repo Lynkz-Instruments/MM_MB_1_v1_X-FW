@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "main.h"
-#include "cat24c32_api.h"
 #include "rtc.h"
 #include "gpio.h"
 #include "lora_app.h"

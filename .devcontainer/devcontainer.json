@@ -21,7 +21,9 @@
                 "ms-vscode.cpptools-extension-pack",
                 "marus25.cortex-debug",
                 "twxs.cmake",
-                "cschlosser.doxdocgen"
+                "cschlosser.doxdocgen",
+                "Gruntfuggly.todo-tree",
+                "anthropic.claude-code"
             ]
 
             // Use 'appPort' to create a container with published ports. If the port isn't working, be sure
