@@ -48,7 +48,7 @@ set(MX_Application_Src
     ${CMAKE_SOURCE_DIR}/Core/Src/stm32_lpm_if.c
     ${CMAKE_SOURCE_DIR}/Core/Src/sys_app.c
     ${CMAKE_SOURCE_DIR}/Core/Src/sys_debug.c
-    ${CMAKE_SOURCE_DIR}/Core/Src/sys_sensors.c
+    # ${CMAKE_SOURCE_DIR}/Core/Src/sys_sensors.c
     ${CMAKE_SOURCE_DIR}/Core/Src/timer_if.c
     ${CMAKE_SOURCE_DIR}/Core/Src/usart_if.c
     ${CMAKE_SOURCE_DIR}/Core/Src/rtc.c
@@ -146,7 +146,10 @@ set(MX_LINK_DIRS
 # Project static libraries
 set(MX_LINK_LIBS 
     STM32_Drivers
-    Utilities	LoRaWAN	SubGHz_Phy	
+    Utilities
+	LoRaWAN
+	SubGHz_Phy
+	
 )
 # Interface library for includes and symbols
 add_library(stm32cubemx INTERFACE)

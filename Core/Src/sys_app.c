@@ -12,7 +12,6 @@
 #include "timer_if.h"
 #include "utilities_def.h"
 #include "sys_debug.h"
-#include "sys_sensors.h"
 
 /* USER CODE BEGIN Includes */
 /* USER CODE END Includes */
@@ -87,11 +86,6 @@ void SystemApp_Init(void)
   /*Set verbose LEVEL*/
   UTIL_ADV_TRACE_SetVerboseLevel(VERBOSE_LEVEL);
 
-  /*Initialize the temperature and Battery measurement services */
-  //SYS_InitMeasurement();
-
-  /*Initialize the Sensors */
-  //EnvSensors_Init();
 
   /*Init low power manager*/
   UTIL_LPM_Init();
@@ -154,13 +148,6 @@ uint8_t GetBatteryLevel(void)
 int16_t GetTemperatureLevel(void)
 {
   int16_t temperatureLevel = 0;
-
-  sensor_t sensor_data;
-
-  EnvSensors_Read(&sensor_data);
-  temperatureLevel = (int16_t)(sensor_data.temperature);
-  /* USER CODE BEGIN GetTemperatureLevel */
-  /* USER CODE END GetTemperatureLevel */
   return temperatureLevel;
 }
 

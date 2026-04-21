@@ -1,9 +1,22 @@
+/**
+ * @file    app_eeprom.c
+ * @brief   Application-level EEPROM interface for the MissMetal sensor node.
+ *
+ * This is the single translation unit that couples the platform-agnostic
+ * CAT24C32 driver to the STM32 HAL.  The three static callbacks below
+ * (eeprom_i2c_write, eeprom_i2c_read, eeprom_delay_ms) are the only
+ * place in the firmware that references hi2c1 for EEPROM traffic.
+ *
+ *  Author: Lynkz Instruments, 2025–2026
+ */
 #include "app_eeprom.h"
 #include "cat24c32.h"
 #include "i2c.h"
 #include <stdio.h>
 
-/* HAL-specific I2C callbacks — the only place in the app that touches the HAL/hi2c1 for EEPROM */
+/* --------------------------------------------------------------------------
+ * HAL I/O callbacks — injected into the driver via CAT24C32_IO_t
+ * -------------------------------------------------------------------------- */
 
 static int8_t eeprom_i2c_write(uint8_t dev_addr, uint8_t *data, uint16_t len)
 {
@@ -28,12 +41,18 @@ static const CAT24C32_IO_t eeprom_io = {
     .delay_ms  = eeprom_delay_ms,
 };
 
+/* --------------------------------------------------------------------------
+ * Init
+ * -------------------------------------------------------------------------- */
+
 int8_t app_eeprom_init(void)
 {
     return CAT24C32_Init(&eeprom_io, 0);
 }
 
-/* Mode -------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+ * Mode
+ * -------------------------------------------------------------------------- */
 
 void app_eeprom_write_mode(uint8_t mode)
 {
@@ -56,7 +75,9 @@ uint8_t app_eeprom_read_mode(void)
     return mode;
 }
 
-/* Config ------------------------------------------------------------------ */
+/* --------------------------------------------------------------------------
+ * Config
+ * -------------------------------------------------------------------------- */
 
 void app_eeprom_write_config(struct AppConfig_s config)
 {
@@ -78,7 +99,11 @@ struct AppConfig_s app_eeprom_read_config(void)
     return config;
 }
 
-/* Frame counter ----------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+ * Frame counter
+ * FCntUp is written one byte at a time to avoid crossing a page boundary,
+ * since EEPROM_FCNTUP_ADDR (0x01) is not page-aligned for a 4-byte write.
+ * -------------------------------------------------------------------------- */
 
 void app_eeprom_write_fcntup(uint32_t fcntup)
 {
