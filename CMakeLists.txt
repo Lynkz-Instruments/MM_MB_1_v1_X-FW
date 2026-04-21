@@ -48,10 +48,10 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/Lynkz_Library/drivers/BMA400/bma400_api.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/Lynkz_Library/drivers/BMA400/BMA400_SensorAPI/bma400.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/Lynkz_Library/drivers/stm32_uart/stm32_uart.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/driver-bma400/bma400.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/lib-stm32-uart/stm32_uart.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/lib-stm32wl-utils/stm32wl_utils.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/Lynkz_Library/drivers/cat24c32_api/cat24c32_api.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/Lynkz_Library/drivers/stm32wl_utils/stm32wl_utils.c
     ${CMAKE_CURRENT_SOURCE_DIR}/LoRaWAN/App/lora_app.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/
     ${CMAKE_CURRENT_SOURCE_DIR}/Utilities/trace/adv_trace/stm32_adv_trace_if_template.c
