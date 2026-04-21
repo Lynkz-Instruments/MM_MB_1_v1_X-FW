@@ -1,0 +1,3 @@
+[submodule "Drivers/driver-bma400"]
+	path = Drivers/driver-bma400
+	url = https://github.com/Lynkz-Instruments/driver-bma400
