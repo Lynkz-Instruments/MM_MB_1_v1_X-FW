@@ -1,0 +1,7 @@
+build/
+CMakeFiles/
+CMakeCache.txt
+tmp/
+gdb.txt
+putty.log
+nPM2100_Datasheet_v1.0.pdf

@@ -1,0 +1,24 @@
+[submodule "micropython/modules/micropython-eeprom"]
+	path = micropython/modules/micropython-eeprom
+	url = git@github.com:Lynkz-Instruments/micropython-eeprom.git
+[submodule "drivers/lr1110/Lora-net-SWDR001"]
+	path = drivers/lr1110/Lora-net-SWDR001
+	url = git@github.com:Lynkz-Instruments/Lora-net-SWDR001.git
+[submodule "drivers/lr1110/Lora-net-SWL2001"]
+	path = drivers/lr1110/Lora-net-SWL2001
+	url = git@github.com:Lynkz-Instruments/Lora-net-SWL2001.git
+[submodule "drivers/lr1110/Lora-net-lr1110_modem_driver"]
+	path = drivers/lr1110/Lora-net-lr1110_modem_driver
+	url = git@github.com:Lynkz-Instruments/Lora-net-lr1110_modem_driver.git
+[submodule "micropython/modules/cxxr-Livestats"]
+	path = micropython/modules/cxxr-Livestats
+	url = git@github.com:Lynkz-Instruments/cxxr-Livestats.git
+[submodule "tools/littlefs"]
+	path = tools/littlefs
+	url = git@github.com:Lynkz-Instruments/littlefs.git
+[submodule "drivers/BMA400/BMA400_SensorAPI"]
+	path = drivers/BMA400/BMA400_SensorAPI
+	url = git@github.com:boschsensortec/BMA400_SensorAPI.git
+[submodule "drivers/nPM2100/npm2100-bm"]
+	path = drivers/nPM2100/npm2100-bm
+	url = git@github.com:NordicSemiconductor/npm2100-bm.git
