@@ -1,5 +1,6 @@
 # MM_MB_1_v1_X-FW
-Firmware for LipSensor v1.0
+
+Firmware for MissMetal sensor.
 
 - RegionUS915.h has settings for bands and channels. If US915_MAX_NB_CHANNELS is changed to 8, join succeeds but stuck in __WFI.
 
