@@ -48,7 +48,6 @@ set(MX_Application_Src
     ${CMAKE_SOURCE_DIR}/Core/Src/stm32_lpm_if.c
     ${CMAKE_SOURCE_DIR}/Core/Src/sys_app.c
     ${CMAKE_SOURCE_DIR}/Core/Src/sys_debug.c
-    # ${CMAKE_SOURCE_DIR}/Core/Src/sys_sensors.c
     ${CMAKE_SOURCE_DIR}/Core/Src/timer_if.c
     ${CMAKE_SOURCE_DIR}/Core/Src/usart_if.c
     ${CMAKE_SOURCE_DIR}/Core/Src/rtc.c
