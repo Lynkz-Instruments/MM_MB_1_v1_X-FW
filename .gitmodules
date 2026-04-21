@@ -1,3 +1,6 @@
 [submodule "Drivers/driver-bma400"]
 	path = Drivers/driver-bma400
 	url = https://github.com/Lynkz-Instruments/driver-bma400
+[submodule "Drivers/lib-stm32wl-utils"]
+	path = Drivers/lib-stm32wl-utils
+	url = https://github.com/Lynkz-Instruments/lib-stm32wl-utils
