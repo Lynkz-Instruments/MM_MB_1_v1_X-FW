@@ -34,7 +34,8 @@ jobs:
             echo "PATCH=$PATCH"       >> $GITHUB_ENV
 
         - name: Print extracted version
-          run: echo "Tag Name: ${{ env.TAG_NAME }}"
+          run: |
+            echo "Tag Name: $TAG_NAME"
 
         # ----------------------------------------------------------------------
         # Source checkout
@@ -61,7 +62,7 @@ jobs:
         # ----------------------------------------------------------------------
         - name: Generate HEX
           run: |
-            OUT_NAME=MM_MB_1_v1_X_${{ env.TAG_NAME }}
+            OUT_NAME=MM_MB_1_v1_X_${TAG_NAME}
             arm-none-eabi-objcopy -O ihex \
               build/Debug/MM_MB_1_v1_X-FW.elf \
               ${OUT_NAME}.hex
@@ -73,7 +74,7 @@ jobs:
         - name: Upload build artifacts
           uses: actions/upload-artifact@v4
           with:
-            name: MissMetal-${{ env.TAG_NAME }}
+            name: MissMetal-${TAG_NAME}
             path: ${{ env.OUT_NAME }}.hex
 
   # --------------------------------------------------------------------------
