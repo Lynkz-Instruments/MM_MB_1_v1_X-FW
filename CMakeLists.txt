@@ -92,6 +92,13 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     # Add user defined libraries
 )
 
+# Generate .hex from .elf after every build
+add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_OBJCOPY} -O ihex $<TARGET_FILE:${CMAKE_PROJECT_NAME}>
+            ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}.hex
+    COMMENT "Generating HEX file"
+)
+
 # Add firmware version
 if(DEFINED FW_VERSION_MAJOR)
     add_compile_definitions(FW_VERSION_MAJOR=${FW_VERSION_MAJOR})
