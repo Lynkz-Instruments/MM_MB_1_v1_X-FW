@@ -17,13 +17,22 @@ static uint32_t s_fcntup = 0;
 
 void app_fcntup_init(void)
 {
-#ifdef FIRST_BOOT
+    if (!app_eeprom_is_provisioned()) {
+        s_fcntup = 0;
+        app_eeprom_write_fcntup(0);
+        app_eeprom_set_provisioned();
+        printf("First boot: FCntUp reset to 0\r\n");
+    } else {
+        s_fcntup = app_eeprom_read_fcntup();
+        printf("FCntUp: %lu\r\n", s_fcntup);
+    }
+}
+
+void app_fcntup_clear(void)
+{
     s_fcntup = 0;
-    app_eeprom_write_fcntup(0);
-#else
-    s_fcntup = app_eeprom_read_fcntup();
-#endif
-    printf("FCntUp restored from EEPROM: %lu\r\n", s_fcntup);
+    app_eeprom_write_fcntup(s_fcntup);
+    printf("FCntUp cleared to 0\r\n");
 }
 
 void app_fcntup_increment_and_save(void)

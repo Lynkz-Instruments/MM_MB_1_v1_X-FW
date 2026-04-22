@@ -21,6 +21,7 @@
 // Common commands
 #define SET_CONFIG_COMMMAND       (0xA1)
 #define SET_DEVICE_MODE_COMMAND   (0xA2)
+#define CLEAR_FCNTUP_COMMAND      (0xA3)
 
 #define OK_RESPONSE               (0xE0)
 #define DONE_RESPONSE             (0xE1)
@@ -32,6 +33,7 @@
 static void app_comm_process(uint8_t cmd, uint8_t const* data, uint16_t len);
 static void app_comm_set_config(uint8_t * command);
 static void app_comm_set_device_mode(uint8_t * command);
+static void app_comm_clear_fcntup(void);
 
 void app_comm_lora_process(uint8_t port, uint8_t * data, uint8_t len)
 {
@@ -74,6 +76,9 @@ static void app_comm_process(uint8_t cmd, uint8_t const* data, uint16_t len)
     case SET_DEVICE_MODE_COMMAND:
         app_comm_set_device_mode((uint8_t *)command);
         break;
+    case CLEAR_FCNTUP_COMMAND:
+        app_comm_clear_fcntup();
+        break;
     default:
         break;
     }
@@ -101,4 +106,13 @@ static void app_comm_set_device_mode(uint8_t * command)
   #endif
 
   app_set_device_mode((AppMode_t)command[0]);
+}
+
+static void app_comm_clear_fcntup(void)
+{
+  #if APP_COMMUNICATION_VERBOSE >= 2
+  print("Clearing FCntUp.\r\n");
+  #endif
+
+  app_fcntup_clear();
 }

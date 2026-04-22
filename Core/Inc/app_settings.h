@@ -68,9 +68,16 @@ struct AppConfig_s app_get_device_config(void);
 
 /**
  * @brief  Load FCntUp from EEPROM.  Must be called once after app_eeprom_init().
- *         Under FIRST_BOOT, resets the counter to 0 and clears the EEPROM value.
+ *         On a blank EEPROM (first boot), resets the counter to 0 and stamps
+ *         the provisioned flag so subsequent boots load normally.
  */
 void app_fcntup_init(void);
+
+/**
+ * @brief  Clear FCntUp to 0 and persist to EEPROM.  Use with caution, as this
+ *         will cause LoRaWAN uplink frame counter desynchronization.
+ */
+void app_fcntup_clear(void);
 
 /**
  * @brief  Increment FCntUp and persist the new value to EEPROM.

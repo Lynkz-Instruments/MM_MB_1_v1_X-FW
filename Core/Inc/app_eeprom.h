@@ -7,13 +7,6 @@
  * All functions call Error_Handler() on I2C failure; callers do not need to
  * check return values except for app_eeprom_init().
  *
- * EEPROM memory map (CAT24C32, 4 kB):
- *   0x00        1 B   BMA400 wake flag
- *   0x01–0x04   4 B   FCntUp (LoRaWAN uplink frame counter, little-endian)
- *   0x05–0x08   4 B   BMA400 sensor time
- *   0x09        1 B   Device mode (AppMode_t)
- *   0x10–0x12   3 B   AppConfig (wake_thresh + sleep_time_minutes)
- *
  *  Author: Lynkz Instruments, 2025–2026
  */
 
@@ -72,5 +65,17 @@ void app_eeprom_write_fcntup(uint32_t fcntup);
  * @return Stored FCntUp value, or 0 for any byte whose read fails.
  */
 uint32_t app_eeprom_read_fcntup(void);
+
+/**
+ * @brief  Return true if the provisioned flag byte equals the magic value.
+ *         False on a blank/erased EEPROM or if not initialized.
+ */
+bool app_eeprom_is_provisioned(void);
+
+/**
+ * @brief  Write the provisioned magic value to EEPROM.  Call once after
+ *         first-boot initialisation is complete.
+ */
+void app_eeprom_set_provisioned(void);
 
 #endif // APP_EEPROM_H

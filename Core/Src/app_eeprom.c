@@ -17,12 +17,12 @@
 
 #include "app_errors.h"
 
-#define EEPROM_BMA_WAKE_FLAG_ADDR               0x00                            // 1 byte
-#define EEPROM_FCNTUP_ADDR                      0x01                            // 2 bytes
-#define EEPROM_MAX_ACCEL_ADDR                   0x03                            // 2 bytes
-#define EEPROM_BMA_SENSOR_TIME_ADDR             0x05                            // 4 bytes
-#define EEPROM_DEVICE_MODE_ADDR                 0x09                            // 1 bytes for storing the device mode.
-#define EEPROM_DEVICE_CONFIG_ADDR               0x10                            // 3 bytes for the device config.
+#define EEPROM_PROVISIONED_FLAG_ADDR            0x00                            // 1 byte — 0xA5 after first boot
+#define EEPROM_FCNTUP_ADDR                      0x01                            // 4 bytes
+#define EEPROM_DEVICE_MODE_ADDR                 0x05                            // 1 byte
+#define EEPROM_DEVICE_CONFIG_ADDR               0x06                            // 3 bytes
+
+#define EEPROM_PROVISIONED_MAGIC                0xA5
 
 /* --------------------------------------------------------------------------
  * HAL I/O callbacks — injected into the driver via CAT24C32_IO_t
@@ -69,6 +69,25 @@ int8_t app_eeprom_init(void)
 bool app_eeprom_is_initialized(void)
 {
     return s_initialized;
+}
+
+/* --------------------------------------------------------------------------
+ * Provisioned flag
+ * -------------------------------------------------------------------------- */
+
+bool app_eeprom_is_provisioned(void)
+{
+    uint8_t flag = 0xFF;
+    if (!s_initialized) return false;
+    CAT24C32_Read(EEPROM_PROVISIONED_FLAG_ADDR, &flag, 1);
+    return flag == EEPROM_PROVISIONED_MAGIC;
+}
+
+void app_eeprom_set_provisioned(void)
+{
+    if (!s_initialized) return;
+    uint8_t magic = EEPROM_PROVISIONED_MAGIC;
+    CAT24C32_Write(EEPROM_PROVISIONED_FLAG_ADDR, &magic, 1);
 }
 
 /* --------------------------------------------------------------------------
