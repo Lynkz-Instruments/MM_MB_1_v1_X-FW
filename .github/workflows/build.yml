@@ -58,14 +58,13 @@ jobs:
             cmake --build --preset Debug
 
         # ----------------------------------------------------------------------
-        # HEX generation
+        # Rename artifacts
         # ----------------------------------------------------------------------
-        - name: Generate HEX
+        - name: Rename build artifacts
           run: |
             OUT_NAME=MM_MB_1_v1_X_${TAG_NAME}
-            arm-none-eabi-objcopy -O ihex \
-              build/Debug/MM_MB_1_v1_X-FW.elf \
-              ${OUT_NAME}.hex
+            cp build/Debug/MM_MB_1_v1_X-FW.elf ${OUT_NAME}.elf
+            cp build/Debug/MM_MB_1_v1_X-FW.hex ${OUT_NAME}.hex
             echo "OUT_NAME=$OUT_NAME" >> $GITHUB_ENV
 
         # ----------------------------------------------------------------------
@@ -74,8 +73,10 @@ jobs:
         - name: Upload build artifacts
           uses: actions/upload-artifact@v4
           with:
-            name: MissMetal-${TAG_NAME}
-            path: ${{ env.OUT_NAME }}.hex
+            name: MissMetal-${{ env.TAG_NAME }}
+            path: |
+              ${{ env.OUT_NAME }}.elf
+              ${{ env.OUT_NAME }}.hex
 
   # --------------------------------------------------------------------------
   # Release
