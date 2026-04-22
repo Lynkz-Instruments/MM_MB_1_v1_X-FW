@@ -1,11 +1,21 @@
 cmake_minimum_required(VERSION 3.22)
 
-#
-# This file is generated only once,
-# and is not re-generated if converter is called multiple times.
-#
-# User is free to modify the file as much as necessary
-#
+# =========================================================
+# Firmware Version Defaults (if not provided by user)
+# =========================================================
+if(NOT DEFINED FW_VERSION_MAJOR)
+    set(FW_VERSION_MAJOR 255)
+endif()
+
+if(NOT DEFINED FW_VERSION_MINOR)
+    set(FW_VERSION_MINOR 255)
+endif()
+
+if(NOT DEFINED FW_VERSION_BUGFIX)
+    set(FW_VERSION_BUGFIX 255)
+endif()
+
+message(STATUS "FW Version: ${FW_VERSION_MAJOR}.${FW_VERSION_MINOR}.${FW_VERSION_BUGFIX}")
 
 # Setup compiler settings
 set(CMAKE_C_STANDARD 11)
@@ -81,3 +91,14 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 
     # Add user defined libraries
 )
+
+# Add firmware version
+if(DEFINED FW_VERSION_MAJOR)
+    add_compile_definitions(FW_VERSION_MAJOR=${FW_VERSION_MAJOR})
+endif()
+if(DEFINED FW_VERSION_MINOR)
+    add_compile_definitions(FW_VERSION_MINOR=${FW_VERSION_MINOR})
+endif()
+if(DEFINED FW_VERSION_BUGFIX)
+    add_compile_definitions(FW_VERSION_BUGFIX=${FW_VERSION_BUGFIX})
+endif()

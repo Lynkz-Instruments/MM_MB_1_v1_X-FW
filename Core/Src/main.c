@@ -47,6 +47,8 @@ int main(void)
     getResetReason(reset_flags, &reset_reason);
     RCC->CSR |= RCC_CSR_RMVF; // Clear reset flags after reading
 
+    printf("MissMetal %s Started!\r\n", TOSTRING(FW_VERSION_MAJOR) "." TOSTRING(FW_VERSION_MINOR) "." TOSTRING(FW_VERSION_BUGFIX));
+
     rslt = app_eeprom_init();
     if (rslt != 0) {
         Error_Handler(ERROR_EEPROM_INIT);

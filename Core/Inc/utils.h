@@ -11,6 +11,9 @@
 #include "app_accel.h"
 #include "LmHandler.h"
 
+#define STRINGIFY(x) #x
+#define TOSTRING(x)  STRINGIFY(x)
+
 void SystemClock_Config(void);
 void EnterShutdownWithWakeUpPinEn(void);
 void EnterShutdownWithBMA(struct AppConfig_s config);
