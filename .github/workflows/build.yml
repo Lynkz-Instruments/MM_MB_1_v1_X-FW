@@ -34,7 +34,7 @@ jobs:
             echo "PATCH=$PATCH"       >> $GITHUB_ENV
 
         - name: Print extracted version
-          run: echo "Tag Name: $TAG_NAME"
+          run: echo "Tag Name: ${{ env.TAG_NAME }}"
 
         # ----------------------------------------------------------------------
         # Source checkout
@@ -44,14 +44,6 @@ jobs:
           with:
             submodules: recursive
             token: ${{ secrets.XAV_TOKEN }}
-
-        # ----------------------------------------------------------------------
-        # Toolchain
-        # ----------------------------------------------------------------------
-        - name: Install ARM toolchain and build tools
-          run: |
-            sudo apt-get update -q
-            sudo apt-get install -y gcc-arm-none-eabi cmake ninja-build
 
         # ----------------------------------------------------------------------
         # Firmware build
