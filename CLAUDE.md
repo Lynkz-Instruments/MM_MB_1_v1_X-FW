@@ -37,30 +37,31 @@ BMP is expected at `/dev/ttyACM0`. The VSCode **cortex-debug** launch config (`D
 
 `main()` runs once per wakeup cycle:
 1. HAL init, peripherals init, `MX_LoRaWAN_Init()`
-2. EEPROM init (CAT24C32 over I2C) → read device mode and config
+2. EEPROM init (CAT24C32 over I2C) → `app_fcntup_init()` → read device mode and config
 3. BMA400 accelerometer init → read temperature
 4. Send a LoRaWAN uplink based on mode (`SendHeartBeatPayload`)
 5. Call `EnterShutdownWithBMA()` or `EnterShutdownNoBMA()` → device enters STM32 SHUTDOWN mode
 
 The `while(1)` at the bottom of `main()` is never reached under normal operation.
 
-### Device Modes (`AppMode_t` in `main.h`)
+### Device Modes (`AppMode_t` in `app_settings.h`)
 
 - `APP_MODE_OPERATION`: Periodic heartbeat only; BMA400 held in low-power mode during sleep (RTC wakeup only).
 - `APP_MODE_BEACON`: Periodic heartbeat; BMA400 threshold interrupt also enabled as a wakeup source.
 - `APP_MODE_STORAGE`: Not yet implemented (falls back to OPERATION).
 
-Mode is persisted in EEPROM at `EEPROM_DEVICE_MODE_ADDR` (0x09).
+Mode is persisted in EEPROM at `EEPROM_DEVICE_MODE_ADDR` (0x05). Mode and config are accessed via `app_get_device_mode()` / `app_set_device_mode()` in `app_settings.c` — do not call `app_eeprom` directly for these fields.
 
 ### EEPROM Layout (CAT24C32, I2C)
 
 | Address | Size | Content |
 |---------|------|---------|
-| 0x00 | 1 B | BMA400 wake flag |
-| 0x01 | 4 B | FCntUp (frame counter) |
-| 0x05 | 4 B | BMA400 sensor time |
-| 0x09 | 1 B | Device mode |
-| 0x10 | 3 B | AppConfig (wake_thresh + sleep_time_minutes) |
+| 0x00 | 1 B | Provisioned flag (0xA5 after first boot) |
+| 0x01 | 4 B | FCntUp (frame counter, little-endian, byte-at-a-time) |
+| 0x05 | 1 B | Device mode (`AppMode_t`) |
+| 0x06 | 3 B | AppConfig (wake_thresh + sleep_time_minutes) |
+
+FCntUp is owned by `app_settings.c` (`s_fcntup`). Access it via `app_get_fcntup()`; persist via `app_fcntup_increment_and_save()`. The provisioned flag is checked on every boot by `app_fcntup_init()` — if absent (erased EEPROM = 0xFF), FCntUp is reset to 0 and the flag is stamped `0xA5`.
 
 ### LoRaWAN
 
@@ -96,12 +97,7 @@ Mode is persisted in EEPROM at `EEPROM_DEVICE_MODE_ADDR` (0x09).
 | `LoRaWAN/App/lora_app.h` | LoRaWAN region, data rate, TX power, ports, activation type |
 | `LoRaWAN/App/se-identity.h` | Device EUI, Join EUI, session keys (ABP) |
 | `LoRaWAN/Target/lorawan_conf.h` | Enabled regions, context management, Class B toggle |
-| `Core/Inc/main.h` | EEPROM addresses, timing constants, threshold limits |
+| `Core/Inc/main.h` | Timing constants, wakeup pin definitions |
+| `Core/Inc/app_settings.h` | `AppMode_t`, `AppConfig_s`, threshold/sleep-time limits, FCntUp API |
+| `Core/Src/app_eeprom.c` | EEPROM address map (all `#define EEPROM_*_ADDR` constants live here) |
 | `Core/Inc/sys_conf.h` | Logging verbosity, low-power mode, debugger pin enable |
-
-## Known Issues / Gotchas
-
-- **`FIRST_BOOT` define** (`main.h`): Uncomment `#define FIRST_BOOT` only on the very first flash to reset FCntUp to 0. Must be commented out for all subsequent flashes.
-- **US915 channel count**: Changing `US915_MAX_NB_CHANNELS` to 8 in `RegionUS915.h` allows the join to succeed but causes the device to hang in `__WFI`. Keep the default channel mask via `SetSelectedChannels()`.
-- **`print()` vs `printf()`**: `print()` in `utils.c` is a custom va_list wrapper that only handles `%d` and `%f`. Use `printf()` for all other format specifiers.
-- **`LM_Delay()`**: Use this instead of `HAL_Delay()` anywhere the LoRaWAN MAC process must keep running (e.g. while waiting for TX/RX windows).

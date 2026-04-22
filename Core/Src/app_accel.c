@@ -22,7 +22,7 @@ static I2C_HandleTypeDef    *s_hi2c;
 static uint8_t               s_addr = BMA400_ADDR;
 static int8_t                s_initialized = 0;
 
-/* ── Bosch driver callbacks ─────────────────────────────────────────────── */
+// Bosch driver callbacks
 
 static BMA400_INTF_RET_TYPE bma400_i2c_read(uint8_t reg_addr, uint8_t *reg_data,
                                              uint32_t len, void *intf_ptr)
@@ -66,7 +66,7 @@ static void bma400_delay_us(uint32_t period, void *intf_ptr)
     while (ticks--) __NOP();
 }
 
-/* ── Public API ─────────────────────────────────────────────────────────── */
+// Public API
 
 int8_t app_accel_init(I2C_HandleTypeDef *hi2c, uint16_t *wake_flag)
 {
