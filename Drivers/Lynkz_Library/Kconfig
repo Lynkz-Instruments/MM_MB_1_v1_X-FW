@@ -1,2 +1,0 @@
-rsource "peripherals/Kconfig.defconfig"
-rsource "drivers/Kconfig.defconfig"

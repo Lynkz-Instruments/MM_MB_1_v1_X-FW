@@ -7,7 +7,7 @@
 #include "rtc.h"
 #include "gpio.h"
 #include "lora_app.h"
-#include "bma400_api.h"
+#include "app_accel.h"
 #include "LmHandler.h"
 
 extern int8_t g_message_was_sent;

@@ -11,8 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "main.h"
-#include "bma400.h"
-#include "bma400_api.h"
+#include "app_accel.h"
 #include "app_eeprom.h"
 #include "stm32_uart.h"
 #include "dma.h"
@@ -32,7 +31,6 @@
 int8_t g_message_was_sent = 0;
 uint32_t g_fcntup = 0;
 int8_t g_eeprom_initialized = 0;
-int8_t g_bma400_initialized = 0;
 
 
 int main(void)
@@ -49,7 +47,7 @@ int main(void)
     float time_diff = 0.0f;
     volatile uint32_t reset_flags = RCC->CSR;
     ResetReason reset_reason = RESET_REASON_NONE;
-    BMA400_SensorContext bma_ctx;
+    int16_t temperature = 0;
     uint8_t clear_flag = 0x00;
     uint8_t eeprom_flag_value = 0;
     (void)time_diff;
@@ -81,30 +79,27 @@ int main(void)
     
     /* Initialize BMA400 sensor */
     uint16_t int_status;
-    rslt = BMA400_Init(&hi2c1, &int_status);
-    if (rslt != BMA400_OK) {
+    rslt = app_accel_init(&hi2c1, &int_status);
+    if (rslt != 0) {
         printf("Error initializing BMA400: %d\r\n", rslt);
         Error_Handler(ERROR_BMA_INIT);
     }
-    g_bma400_initialized = 1;
     printf("BMA400 initialized successfully.\r\n");
     printf("BMA400 wake flag: %d\r\n", int_status);
 
-    // Getting temperature.
-    rslt = BMA400_GetTemperature(&bma_ctx.temperature);
-    if (rslt != BMA400_OK) {
+    rslt = app_accel_get_temperature(&temperature);
+    if (rslt != 0) {
         printf("Error getting temperature: %d\r\n", rslt);
         Error_Handler(ERROR_BMA_GET_TEMPERATURE);
-    
     }
-    printf("Temperature: %d dC\r\n", bma_ctx.temperature);
+    printf("Temperature: %d dC\r\n", temperature);
 
     // Sending messages based on mode.
     // Mode OPERATION or BEACON
     // TODO: Using BMA400 flag to make sure the device wakes up from BMA400 interrupt pin.
     if (current_mode == APP_MODE_OPERATION || current_mode == APP_MODE_BEACON){
         print("Sending heart beat payload\r\n");
-        SendHeartBeatPayload(current_mode, current_config, bma_ctx.temperature);
+        SendHeartBeatPayload(current_mode, current_config, temperature);
         // blink(2, 100, 0); // Blink twice to indicate that the payload was sent
         HAL_Delay(500);
         g_message_was_sent = 1;
@@ -114,7 +109,7 @@ int main(void)
     // else if (current_mode == APP_MODE_BEACON /* and no flag from BMA400 */){
     //     print("Sending heart beat payload (BEACON)\r\n");
     //     uint16_t max_accel = 0;
-    //     SendHeartBeatPayload(current_mode, current_config, bma_ctx.temperature);
+    //     SendHeartBeatPayload(current_mode, current_config, temperature);
     //     blink(2, 100, 0); // Blink twice to indicate that the payload was sent
     //     HAL_Delay(500);
     //     g_message_was_sent = 1;
@@ -122,7 +117,7 @@ int main(void)
     // else if (current_mode == APP_MODE_BEACON /* and flag from BMA400 */){
     //     print("Sending data payload (BEACON)\r\n");
     //     uint16_t max_accel = 0;
-    //     SendBeaconPayload(&max_accel, &bma_ctx.temperature);
+    //     SendBeaconPayload(&max_accel, &temperature);
     //     blink(2, 100, 0); // Blink twice to indicate that the payload was sent
     //     HAL_Delay(500);
     //     g_message_was_sent = 1;

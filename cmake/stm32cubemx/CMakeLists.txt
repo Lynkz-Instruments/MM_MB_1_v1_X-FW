@@ -89,6 +89,7 @@ set(STM32_Drivers_Src
 
 set(Utilities_Src
     ${CMAKE_SOURCE_DIR}/Utilities/trace/adv_trace/stm32_adv_trace.c
+    ${CMAKE_SOURCE_DIR}/Utilities/trace/adv_trace/stm32_adv_trace_if_template.c
     ${CMAKE_SOURCE_DIR}/Utilities/misc/stm32_mem.c
     ${CMAKE_SOURCE_DIR}/Utilities/misc/stm32_systime.c
     ${CMAKE_SOURCE_DIR}/Utilities/misc/stm32_tiny_sscanf.c

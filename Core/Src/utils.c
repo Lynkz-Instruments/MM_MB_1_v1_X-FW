@@ -9,9 +9,7 @@ Utils from Charles Marseille, Lynkz Instruments, 2026
 extern int8_t g_message_was_sent;
 extern uint32_t g_fcntup;
 extern int8_t g_eeprom_initialized;
-extern int8_t g_bma400_initialized;
 extern RTC_HandleTypeDef hrtc;
-extern I2C_HandleTypeDef hi2c1;
 
 void SystemClock_Config(void)
 {
@@ -60,11 +58,7 @@ void SystemClock_Config(void)
 void EnterShutdownWithBMA(struct AppConfig_s config)
 {
     LoRaWAN_DeInit();
-    if (g_bma400_initialized) {
-        // BMA400_GenericInterruptsByActivity();
-        // BMA400_ActivityAutoWakeupAutoLP(config.wake_thresh);
-        BMA400_configureLPThresholdInterrupt(config.wake_thresh);
-    }
+    app_accel_prepare_beacon_shutdown(config.wake_thresh);
     // blink(3, 100, 0);
     HAL_NVIC_EnableIRQ(EXTI0_IRQn);
     HAL_PWR_EnableWakeUpPin(PWR_WAKEUP_PIN1_HIGH);
@@ -81,9 +75,7 @@ void EnterShutdownWithBMA(struct AppConfig_s config)
 void EnterShutdownNoBMA(struct AppConfig_s config)
 {
     LoRaWAN_DeInit();
-    if (g_bma400_initialized) {
-        BMA400_SetLowPowerMode();
-    }
+    app_accel_prepare_operation_shutdown();
     // blink(3, 100, 0);
     HAL_NVIC_EnableIRQ(EXTI0_IRQn);
     HAL_PWR_EnableWakeUpPin(PWR_WAKEUP_PIN1_HIGH);

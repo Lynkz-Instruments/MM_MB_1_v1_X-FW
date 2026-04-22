@@ -47,31 +47,25 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
-    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/Lynkz_Library/drivers/BMA400/bma400_api.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/driver-bma400/bma400.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/lib-stm32-uart/stm32_uart.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/lib-stm32wl-utils/stm32wl_utils.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/driver-cat24c32/cat24c32.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/LoRaWAN/App/lora_app.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/
-    ${CMAKE_CURRENT_SOURCE_DIR}/Utilities/trace/adv_trace/stm32_adv_trace_if_template.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/utils.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/app_accel.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/app_communication.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/app_eeprom.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/driver-bma400/bma400.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/driver-cat24c32/cat24c32.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/lib-stm32-uart/stm32_uart.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/lib-stm32wl-utils/stm32wl_utils.c
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
-    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Inc/
-    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/Lynkz_Library/drivers/BMA400/
-    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/Lynkz_Library/drivers/BMA400/BMA400_SensorAPI/
-    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/Lynkz_Library/drivers/stm32_uart/
+    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/driver-bma400/
     ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/driver-cat24c32/
-    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/Lynkz_Library/drivers/stm32wl_utils/
-    ${CMAKE_CURRENT_SOURCE_DIR}/LoRaWAN/App/
-    ${CMAKE_CURRENT_SOURCE_DIR}/Utilities/trace/adv_trace/
+    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/lib-stm32-uart/
+    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/lib-stm32wl-utils/
 )
 
 # Add project symbols (macros)
