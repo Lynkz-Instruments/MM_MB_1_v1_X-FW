@@ -5,7 +5,6 @@ Utils from Charles Marseille, Lynkz Instruments, 2026
 */
 #include "utils.h"
 
-extern uint32_t g_fcntup;
 extern RTC_HandleTypeDef hrtc;
 
 void SystemClock_Config(void)
@@ -56,7 +55,6 @@ void EnterShutdownWithBMA(struct AppConfig_s config)
 {
     LoRaWAN_DeInit();
     app_accel_prepare_beacon_shutdown(config.wake_thresh);
-    // blink(3, 100, 0);
     HAL_NVIC_EnableIRQ(EXTI0_IRQn);
     HAL_PWR_EnableWakeUpPin(PWR_WAKEUP_PIN1_HIGH);
     HAL_RTCEx_DeactivateWakeUpTimer(&hrtc);
@@ -73,7 +71,6 @@ void EnterShutdownNoBMA(struct AppConfig_s config)
 {
     LoRaWAN_DeInit();
     app_accel_prepare_operation_shutdown();
-    // blink(3, 100, 0);
     HAL_NVIC_EnableIRQ(EXTI0_IRQn);
     HAL_PWR_EnableWakeUpPin(PWR_WAKEUP_PIN1_HIGH);
     HAL_RTCEx_DeactivateWakeUpTimer(&hrtc);
@@ -125,18 +122,4 @@ void LM_Delay(uint32_t delay_ms, uint32_t start_time_ms)
     while ((HAL_GetTick() - start) < delay_ms) {
         LmHandlerProcess();
     }
-}
-
-void blink(int times, int delay_ms, uint8_t end_state) {
-    // for (int i = 0; i < times; i++) {
-    //     HAL_GPIO_TogglePin(LED_GPIO_PORT, LED_PIN);
-    //     HAL_Delay(100);
-    //     HAL_GPIO_TogglePin(LED_GPIO_PORT, LED_PIN);
-    //     HAL_Delay(delay_ms);
-    // }
-    // if (end_state == 0) {
-    //     HAL_GPIO_WritePin(LED_GPIO_PORT, LED_PIN, GPIO_PIN_RESET);
-    // } else {
-    //     HAL_GPIO_WritePin(LED_GPIO_PORT, LED_PIN, GPIO_PIN_SET);
-    // }
 }

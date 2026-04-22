@@ -20,6 +20,7 @@
 #ifndef APP_EEPROM_H
 #define APP_EEPROM_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #include "app_settings.h"
@@ -29,6 +30,12 @@
  * @return 0 on success, -1 if the EEPROM does not respond.
  */
 int8_t app_eeprom_init(void);
+
+/**
+ * @brief  Check whether app_eeprom_init() completed successfully.
+ * @return true if initialized, false otherwise.
+ */
+bool app_eeprom_is_initialized(void);
 
 /**
  * @brief  Persist the device operating mode (AppMode_t) to EEPROM.

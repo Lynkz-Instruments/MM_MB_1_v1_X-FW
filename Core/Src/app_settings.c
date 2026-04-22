@@ -9,6 +9,34 @@
 #include "app_eeprom.h"
 #include <stdio.h>
 
+/* --------------------------------------------------------------------------
+ * Frame counter
+ * -------------------------------------------------------------------------- */
+
+static uint32_t s_fcntup = 0;
+
+void app_fcntup_init(void)
+{
+#ifdef FIRST_BOOT
+    s_fcntup = 0;
+    app_eeprom_write_fcntup(0);
+#else
+    s_fcntup = app_eeprom_read_fcntup();
+#endif
+    printf("FCntUp restored from EEPROM: %lu\r\n", s_fcntup);
+}
+
+void app_fcntup_increment_and_save(void)
+{
+    s_fcntup++;
+    app_eeprom_write_fcntup(s_fcntup);
+}
+
+uint32_t app_get_fcntup(void)
+{
+    return s_fcntup;
+}
+
 void app_set_device_mode(AppMode_t mode)
 {
     if (mode >= APP_MODE_MAX) return;

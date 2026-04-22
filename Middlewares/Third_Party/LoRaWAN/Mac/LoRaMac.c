@@ -56,6 +56,7 @@
 
 #include "LoRaMac.h"
 #include "mw_log_conf.h"
+#include "app_settings.h"
 
 #if (defined( LORAMAC_VERSION ) && (( LORAMAC_VERSION == 0x01000300 ) || ( LORAMAC_VERSION == 0x01000400 ) || ( LORAMAC_VERSION == 0x01010100 )))
 #else
@@ -429,10 +430,6 @@ typedef union uLoRaMacRadioEvents
  */
 LoRaMacRadioEvents_t LoRaMacRadioEvents = { .Value = 0 };
 
-/* 
- * Global FCntUp from main, read from EEPROM 
- */
-extern uint32_t g_fcntup;
 
 /*!
  * \brief Function to be executed on Radio Tx Done event
@@ -3963,7 +3960,7 @@ static LoRaMacStatus_t PrepareFrame( LoRaMacHeader_t* macHdr, LoRaMacFrameCtrl_t
     MacCtx.PktBufferLen = 0;
     MacCtx.NodeAckRequested = false;
     uint32_t fCntUp = 0;
-    fCntUp = g_fcntup;
+    fCntUp = app_get_fcntup();
     size_t macCmdsSize = 0;
     uint8_t availableSize = 0;
 

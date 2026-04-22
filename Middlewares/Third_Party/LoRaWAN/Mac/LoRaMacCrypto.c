@@ -47,6 +47,7 @@
 #include "LoRaMacSerializer.h"
 #include "LoRaMacVersion.h"
 #include "sys_app.h"
+#include "app_settings.h"
 
 /*
  * Frame direction definition for uplink communications
@@ -133,8 +134,6 @@ static KeyAddr_t KeyAddrList[NUM_OF_SEC_CTX] =
     };
 
 
-/* cmars: g_fcntup variable to store the global fcntup defined in main.c*/
-extern uint32_t g_fcntup;
 
 /*
  * Encrypts the payload
@@ -964,7 +963,7 @@ LoRaMacCryptoStatus_t LoRaMacCryptoGetFCntUp( uint32_t* currentUp )
     }
 
     // *currentUp = CryptoNvm->FCntList.FCntUp + 1;
-    *currentUp = g_fcntup;
+    *currentUp = app_get_fcntup();
 
     return LORAMAC_CRYPTO_SUCCESS;
 }

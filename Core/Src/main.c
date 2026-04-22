@@ -29,10 +29,6 @@
 #include "utils.h"
 #include "stm32_systime.h"
 
-uint32_t g_fcntup = 0;
-int8_t g_eeprom_initialized = 0;
-
-
 int main(void)
 {
     HAL_Init();
@@ -55,8 +51,8 @@ int main(void)
     if (rslt != 0) {
         Error_Handler(ERROR_EEPROM_INIT);
     } else {
-        g_eeprom_initialized = 1;
         printf("EEPROM initialized successfully.\r\n");
+        app_fcntup_init();
     }
 
     AppMode_t current_mode = app_get_device_mode();

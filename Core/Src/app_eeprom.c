@@ -13,6 +13,7 @@
 #include "cat24c32.h"
 #include "i2c.h"
 #include <stdio.h>
+#include <stdbool.h>
 
 #include "app_errors.h"
 
@@ -54,9 +55,20 @@ static const CAT24C32_IO_t eeprom_io = {
  * Init
  * -------------------------------------------------------------------------- */
 
+static bool s_initialized = false;
+
 int8_t app_eeprom_init(void)
 {
-    return CAT24C32_Init(&eeprom_io, 0);
+    int8_t rslt = CAT24C32_Init(&eeprom_io, 0);
+    if (rslt == CAT24C32_OK) {
+        s_initialized = true;
+    }
+    return rslt;
+}
+
+bool app_eeprom_is_initialized(void)
+{
+    return s_initialized;
 }
 
 /* --------------------------------------------------------------------------
@@ -75,6 +87,10 @@ void app_eeprom_write_mode(uint8_t mode)
 uint8_t app_eeprom_read_mode(void)
 {
     uint8_t mode = 0xFF;
+    if(!s_initialized) {
+        // If the EEPROM isn't initialized, return an invalid mode.
+        return mode;
+    }
     int8_t rslt = CAT24C32_Read(EEPROM_DEVICE_MODE_ADDR, &mode, sizeof(mode));
     if (rslt != CAT24C32_OK) {
         printf("EEPROM Read Error (Device Mode)!\r\n");
@@ -89,7 +105,11 @@ uint8_t app_eeprom_read_mode(void)
  * -------------------------------------------------------------------------- */
 
 void app_eeprom_write_config(struct AppConfig_s config)
-{
+{   
+    if(!s_initialized) {
+        return;
+    }
+
     int8_t rslt = CAT24C32_Write(EEPROM_DEVICE_CONFIG_ADDR, (uint8_t *)&config, sizeof(struct AppConfig_s));
     if (rslt != CAT24C32_OK) {
         printf("EEPROM Write Error (Device Config)!\r\n");
@@ -100,6 +120,11 @@ void app_eeprom_write_config(struct AppConfig_s config)
 struct AppConfig_s app_eeprom_read_config(void)
 {
     struct AppConfig_s config = {0};
+
+    if(!s_initialized) {
+        return config;
+    }
+
     int8_t rslt = CAT24C32_Read(EEPROM_DEVICE_CONFIG_ADDR, (uint8_t *)&config, sizeof(struct AppConfig_s));
     if (rslt != CAT24C32_OK) {
         printf("EEPROM Read Error (Device Config)!\r\n");
@@ -116,6 +141,7 @@ struct AppConfig_s app_eeprom_read_config(void)
 
 void app_eeprom_write_fcntup(uint32_t fcntup)
 {
+    if (!s_initialized) return;
     for (size_t i = 0; i < sizeof(fcntup); i++) {
         uint8_t buf = (fcntup >> (8 * i)) & 0xFF;
         CAT24C32_Write(EEPROM_FCNTUP_ADDR + i, &buf, 1);
@@ -125,6 +151,7 @@ void app_eeprom_write_fcntup(uint32_t fcntup)
 uint32_t app_eeprom_read_fcntup(void)
 {
     uint32_t fcntup = 0;
+    if (!s_initialized) return fcntup;
     for (size_t i = 0; i < sizeof(fcntup); i++) {
         uint8_t buf = 0;
         if (CAT24C32_Read(EEPROM_FCNTUP_ADDR + i, &buf, 1) == CAT24C32_OK) {

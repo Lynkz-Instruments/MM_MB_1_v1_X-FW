@@ -62,4 +62,24 @@ void app_set_device_config(struct AppConfig_s config);
  */
 struct AppConfig_s app_get_device_config(void);
 
+/* --------------------------------------------------------------------------
+ * Frame counter
+ * -------------------------------------------------------------------------- */
+
+/**
+ * @brief  Load FCntUp from EEPROM.  Must be called once after app_eeprom_init().
+ *         Under FIRST_BOOT, resets the counter to 0 and clears the EEPROM value.
+ */
+void app_fcntup_init(void);
+
+/**
+ * @brief  Increment FCntUp and persist the new value to EEPROM.
+ */
+void app_fcntup_increment_and_save(void);
+
+/**
+ * @brief  Return the current FCntUp value.
+ */
+uint32_t app_get_fcntup(void);
+
 #endif /* APP_SETTINGS_H */

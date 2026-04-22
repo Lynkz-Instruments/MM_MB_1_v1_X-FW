@@ -37,6 +37,7 @@
 /* USER CODE BEGIN Includes */
 #include "Region.h"
 #include "app_eeprom.h"
+#include "app_settings.h"
 #include "LoRaMac.h"
 #include "utils.h"
 #include "app_communication.h"
@@ -90,8 +91,6 @@ typedef enum TxEventType_e
 
 /* USER CODE BEGIN PD */
 static const char *slotStrings[] = { "1", "2", "C", "C_MC", "P", "P_MC" };
-extern uint32_t g_fcntup; // Global frame count up variable, read in LoRaMac.c
-extern int8_t g_eeprom_initialized;
 
 /* USER CODE END PD */
 
@@ -486,20 +485,8 @@ void SendTxData(void)
     LmHandlerErrorStatus_t status = LORAMAC_HANDLER_ERROR;
     UTIL_TIMER_Time_t nextTxIn = 0;
 
-#ifdef FIRST_BOOT
-    g_fcntup = 0;
-#else
-    if (g_eeprom_initialized == 1) {
-        g_fcntup = app_eeprom_read_fcntup();
-    } else {
-        APP_LOG(TS_ON, VLEVEL_L, "Failed to read counter from EEPROM\r\n");
-    }
-#endif
-
-    g_fcntup++;
-    app_eeprom_write_fcntup(g_fcntup);
-
-	APP_LOG(TS_ON, VLEVEL_L, "FCntUp saved to eeprom: %d\r\n", g_fcntup);
+    app_fcntup_increment_and_save();
+    APP_LOG(TS_ON, VLEVEL_L, "FCntUp: %d\r\n", app_get_fcntup());
 
     if (LmHandlerIsBusy() == false){
         status = LmHandlerSend(&AppData, LmHandlerParams.IsTxConfirmed, false);
