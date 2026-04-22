@@ -18,4 +18,5 @@ void EnterShutdownWithWakeUpPinEn(void);
 void EnterShutdownWithBMA(struct AppConfig_s config);
 void EnterShutdownNoBMA(struct AppConfig_s config);
 void print(const char *fmt, ...);
+void LM_Delay(uint32_t delay_ms, uint32_t start_time_ms);
 void blink(int times, int delay_ms, uint8_t end_state);

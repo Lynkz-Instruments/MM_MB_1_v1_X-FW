@@ -44,15 +44,9 @@ int main(void)
     MX_USART2_UART_Init();
 
     int rslt = 0;
-    float time_diff = 0.0f;
-    volatile uint32_t reset_flags = RCC->CSR;
+    uint32_t reset_flags = RCC->CSR;
     ResetReason reset_reason = RESET_REASON_NONE;
     int16_t temperature = 0;
-    uint8_t clear_flag = 0x00;
-    uint8_t eeprom_flag_value = 0;
-    (void)time_diff;
-    (void)clear_flag;
-    (void)eeprom_flag_value;
 
     getResetReason(reset_flags, &reset_reason);
     RCC->CSR |= RCC_CSR_RMVF; // Clear reset flags after reading
@@ -65,7 +59,6 @@ int main(void)
         printf("EEPROM initialized successfully.\r\n");
     }
 
-    // Show mode and configs.
     AppMode_t current_mode = app_get_device_mode();
     printf("Current device mode: %s\r\n", 
         current_mode == APP_MODE_STORAGE ? "STORAGE" :
@@ -77,7 +70,6 @@ int main(void)
     printf("Accel. Threshold (%d * 8mg) = %d mg\r\n", current_config.wake_thresh, current_config.wake_thresh * 8);
     printf("Sleep time: %d min\r\n", current_config.sleep_time_minutes);
     
-    /* Initialize BMA400 sensor */
     uint16_t int_status;
     rslt = app_accel_init(&hi2c1, &int_status);
     if (rslt != 0) {
@@ -94,45 +86,23 @@ int main(void)
     }
     printf("Temperature: %d dC\r\n", temperature);
 
-    // Sending messages based on mode.
-    // Mode OPERATION or BEACON
-    // TODO: Using BMA400 flag to make sure the device wakes up from BMA400 interrupt pin.
-    if (current_mode == APP_MODE_OPERATION || current_mode == APP_MODE_BEACON){
-        print("Sending heart beat payload\r\n");
+    // Sending heartbeat payload.
+    if (current_mode == APP_MODE_OPERATION || current_mode == APP_MODE_BEACON) {
+        printf("Sending heart beat payload\r\n");
         SendHeartBeatPayload(current_mode, current_config, temperature);
-        // blink(2, 100, 0); // Blink twice to indicate that the payload was sent
-        HAL_Delay(500);
+        LM_Delay(500, 0);
     }
 
-    // The following logic will be used if flag from BMA400 is get.
-    // else if (current_mode == APP_MODE_BEACON /* and no flag from BMA400 */){
-    //     print("Sending heart beat payload (BEACON)\r\n");
-    //     uint16_t max_accel = 0;
-    //     SendHeartBeatPayload(current_mode, current_config, temperature);
-    //     blink(2, 100, 0); // Blink twice to indicate that the payload was sent
-    //     HAL_Delay(500);
-    // }
-    // else if (current_mode == APP_MODE_BEACON /* and flag from BMA400 */){
-    //     print("Sending data payload (BEACON)\r\n");
-    //     uint16_t max_accel = 0;
-    //     SendBeaconPayload(&max_accel, &temperature);
-    //     blink(2, 100, 0); // Blink twice to indicate that the payload was sent
-    //     HAL_Delay(500);
-    // }
-
-    // Entering shutdown mode based on current mode.
-    // Get the device mode and config in case it changed by a dowmlink.
+    // Re-read mode and config in case a downlink changed them.
     current_mode = app_get_device_mode();
     current_config = app_get_device_config();
-    if (current_mode == APP_MODE_OPERATION){
+    if (current_mode == APP_MODE_OPERATION) {
         EnterShutdownNoBMA(current_config);
-    }
-    else{
+    } else {
         EnterShutdownWithBMA(current_config);
     }
 
-    while (1)
-    {
+    while (1) {
         print("This should never print...\r\n");
         HAL_Delay(500);
     }

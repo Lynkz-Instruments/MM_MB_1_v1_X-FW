@@ -119,7 +119,8 @@ void print(const char *fmt, ...) {
     va_end(args);
 }
 
-void LM_Delay(uint32_t delay_ms, uint32_t start_time_ms){
+void LM_Delay(uint32_t delay_ms, uint32_t start_time_ms)
+{
     uint32_t start = start_time_ms ? start_time_ms : HAL_GetTick();
     while ((HAL_GetTick() - start) < delay_ms) {
         LmHandlerProcess();
