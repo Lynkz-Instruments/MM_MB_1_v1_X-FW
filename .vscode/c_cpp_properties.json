@@ -8,9 +8,6 @@
                 "${workspaceFolder}/Drivers/STM32WLxx_HAL_Driver/Inc",
                 "${workspaceFolder}/Drivers/CMSIS/Device/ST/STM32WLxx/Include",
                 "${workspaceFolder}/Drivers/CMSIS/Include",
-                "${workspaceFolder}/Drivers/Lynkz_Library/drivers/cat24c32_api",
-                "${workspaceFolder}/Drivers/Lynkz_Library/drivers/bma400",
-                "${workspaceFolder}/Drivers/Lynkz_Library/drivers/BMA400/BMA400_SensorAPI",
                 "${workspaceFolder}/Middlewares/Third_Party/SubGHz_Phy",
                 "${workspaceFolder}/Utilities/**",
                 "${workspaceFolder}/LoRaWAN/App"
@@ -19,7 +16,7 @@
                 "STM32WL55xx",
                 "USE_HAL_DRIVER"
             ],
-            "compilerPath": "/gcc-arm-none-eabi-14.2.rel1/bin/arm-none-eabi-gcc",
+            "compilerPath": "/gcc-arm-none-eabi/bin/arm-none-eabi-gcc",
             "cStandard": "c11",
             "cppStandard": "c++17",
             "intelliSenseMode": "linux-gcc-arm",
