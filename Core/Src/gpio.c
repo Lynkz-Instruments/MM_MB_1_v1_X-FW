@@ -1,25 +1,5 @@
 #include "gpio.h"
 
-/*
-oretag v1.0 pinout:
-
-PA2: UART stm32 TX
-PA3: UART stm32 RX
-PA0: BMA400 INT1 wake stm32
-PA10: I2C1_SDA
-PA13: SWDIO_STM32
-PA14: SWCLK_STM32
-PA15: TDI
-
-PB1: LED
-PB3: TDO
-PB6: I2C_SCL
-PB10: TB_DETECT
-
-PC13: STM_INT2
-
-*/
-
 void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};

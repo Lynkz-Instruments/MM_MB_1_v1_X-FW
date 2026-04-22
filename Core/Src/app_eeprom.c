@@ -14,6 +14,15 @@
 #include "i2c.h"
 #include <stdio.h>
 
+#include "app_errors.h"
+
+#define EEPROM_BMA_WAKE_FLAG_ADDR               0x00                            // 1 byte
+#define EEPROM_FCNTUP_ADDR                      0x01                            // 2 bytes
+#define EEPROM_MAX_ACCEL_ADDR                   0x03                            // 2 bytes
+#define EEPROM_BMA_SENSOR_TIME_ADDR             0x05                            // 4 bytes
+#define EEPROM_DEVICE_MODE_ADDR                 0x09                            // 1 bytes for storing the device mode.
+#define EEPROM_DEVICE_CONFIG_ADDR               0x10                            // 3 bytes for the device config.
+
 /* --------------------------------------------------------------------------
  * HAL I/O callbacks — injected into the driver via CAT24C32_IO_t
  * -------------------------------------------------------------------------- */

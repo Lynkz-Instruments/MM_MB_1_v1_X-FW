@@ -11,7 +11,6 @@
 
 #include "app_communication.h"
 
-#include "main.h"
 #include "utils.h"
 
 // 0 -> No log

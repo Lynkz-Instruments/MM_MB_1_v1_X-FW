@@ -26,7 +26,7 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
+#include "stm32wlxx_hal.h"
 
 /* DMA memory to memory transfer handles -------------------------------------*/
 

@@ -4,10 +4,11 @@
 /* Includes ------------------------------------------------------------------*/
 #include <math.h>
 #include "timer_if.h"
-#include "main.h" /*for STM32CubeMX generated RTC_N_PREDIV_S and RTC_N_PREDIV_A*/
 #include "rtc.h"
 #include "utilities_def.h"
 #include "stm32wlxx_ll_rtc.h"
+
+#include "app_errors.h"
 
 /* USER CODE BEGIN Includes */
 /* USER CODE END Includes */

@@ -32,7 +32,6 @@
 #include "LmHandler.h"
 #include "adc_if.h"
 #include "CayenneLpp.h"
-// #include "sys_sensors.h"
 #include "flash_if.h"
 
 /* USER CODE BEGIN Includes */
@@ -41,6 +40,7 @@
 #include "LoRaMac.h"
 #include "utils.h"
 #include "app_communication.h"
+#include "gpio.h"
 /* USER CODE END Includes */
 
 /* External variables ---------------------------------------------------------*/
@@ -71,20 +71,7 @@ typedef enum TxEventType_e
 
 /* USER CODE END PTD */
 
-/* Private define ------------------------------------------------------------*/
-/**
-	* LEDs period value of the timer in ms
-	*/
-#define LED_PERIOD_TIME 500
-
-//added for using a single led on MM_MB_v1
-#define LED1_GPIO_Port GPIOB
-#define LED1_Pin GPIO_PIN_15
-#define LED2_GPIO_Port GPIOB
-#define LED2_Pin GPIO_PIN_15
-#define LED3_GPIO_Port GPIOB
-#define LED3_Pin GPIO_PIN_15
-#define BUT1_Pin GPIO_PIN_0
+#define DOWNLINK_WAIT_INTERVAL 2500 // ms, time to wait for downlink after sending uplink
 
 
 /**
@@ -105,7 +92,6 @@ typedef enum TxEventType_e
 static const char *slotStrings[] = { "1", "2", "C", "C_MC", "P", "P_MC" };
 extern uint32_t g_fcntup; // Global frame count up variable, read in LoRaMac.c
 extern int8_t g_eeprom_initialized;
-extern int8_t g_message_was_sent;
 
 /* USER CODE END PD */
 
@@ -234,14 +220,6 @@ static void OnPingSlotPeriodicityChanged(uint8_t pingSlotPeriodicity);
 	*/
 static void OnSystemReset(void);
 
-/* USER CODE BEGIN PFP */
-/**
-	* @brief  Print system time marker for LoRa debugging
-	* @param  label message label to print
-	*/
-static void PrintSysTimeMarkerLoRa(const char *label);
-
-/* USER CODE END PFP */
 
 /* Private variables ---------------------------------------------------------*/
 /**
@@ -325,11 +303,6 @@ static uint8_t AppDataBuffer[LORAWAN_APP_DATA_BUFFER_MAX_SIZE];
 	*/
 static LmHandlerAppData_t AppData = { 0, 0, AppDataBuffer };
 
-/**
-	* @brief Specifies the state of the application LED
-	*/
-static uint8_t AppLedStateOn = RESET;
-
 /* USER CODE END PV */
 
 /* Exported functions ---------------------------------------------------------*/
@@ -388,8 +361,6 @@ void LoRaWAN_Init(void)
 	UTIL_TIMER_Create(&StopJoinTimer, JOIN_TIME, UTIL_TIMER_ONESHOT, OnStopJoinTimerEvent, NULL);
 
 	UTIL_SEQ_RegTask((1 << CFG_SEQ_Task_LmHandlerProcess), UTIL_SEQ_RFU, LmHandlerProcess);
-
-	UTIL_SEQ_RegTask((1 << CFG_SEQ_Task_LoRaSendOnTxTimerOrButtonEvent), UTIL_SEQ_RFU, SendTxData);
 	UTIL_SEQ_RegTask((1 << CFG_SEQ_Task_LoRaStoreContextEvent), UTIL_SEQ_RFU, StoreContext);
 	UTIL_SEQ_RegTask((1 << CFG_SEQ_Task_LoRaStopJoinEvent), UTIL_SEQ_RFU, StopJoin);
 
@@ -439,10 +410,6 @@ void LoRaWAN_DeInit(void)
 {
 	/* USER CODE BEGIN LoRaWAN_DeInit_1 */
 	int8_t rslt = true;
-
-	// if (g_message_was_sent == 1) {
-	// 	LoRaWAN_checkTxDone();
-	// }
 	
     UTIL_TIMER_Stop(&TxTimer);
 	UTIL_TIMER_Stop(&StopJoinTimer);
@@ -479,26 +446,6 @@ void LoRaWAN_checkTxDone()
 	}
 }
 
-/* USER CODE BEGIN PB_Callbacks */
-
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
-	switch (GPIO_Pin)
-	{
-	case  BUT1_Pin:
-		/* Note: when "EventType == TX_ON_TIMER" this GPIO is not initialized */
-		if (EventType == TX_ON_EVENT)
-		{
-		UTIL_SEQ_SetTask((1 << CFG_SEQ_Task_LoRaSendOnTxTimerOrButtonEvent), CFG_SEQ_Prio_0);
-		}
-		break;
-	default:
-		break;
-	}
-}
-
-/* USER CODE END PB_Callbacks */
-
 /* Private functions ---------------------------------------------------------*/
 /* USER CODE BEGIN PrFD */
 
@@ -508,7 +455,6 @@ static void OnRxData(LmHandlerAppData_t *appData, LmHandlerRxParams_t *params)
 {
 	/* USER CODE BEGIN OnRxData_1 */
 	uint8_t RxPort = 0;
-	uint8_t i = 0;
 
 	if (params != NULL)
 	{
@@ -581,9 +527,7 @@ static void OnTxTimerEvent(void *context)
 {
 	/* USER CODE BEGIN OnTxTimerEvent_1 */
 	UNUSED(context);
-
 	/* USER CODE END OnTxTimerEvent_1 */
-	UTIL_SEQ_SetTask((1 << CFG_SEQ_Task_LoRaSendOnTxTimerOrButtonEvent), CFG_SEQ_Prio_0);
 
 	/*Wait for next tx slot*/
 	UTIL_TIMER_Start(&TxTimer);
@@ -773,9 +717,7 @@ static void OnSystemReset(void)
 static void StopJoin(void)
 {
 	/* USER CODE BEGIN StopJoin_1 */
-	HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET); /* LED_BLUE */
-	HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET); /* LED_GREEN */
-	HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, GPIO_PIN_SET); /* LED_RED */
+	HAL_GPIO_WritePin(LED_GPIO_PORT, LED_PIN, GPIO_PIN_SET); /* LED_GREEN */
 	/* USER CODE END StopJoin_1 */
 
 	UTIL_TIMER_Stop(&TxTimer);
@@ -818,9 +760,7 @@ static void OnStopJoinTimerEvent(void *context)
 	UTIL_SEQ_SetTask((1 << CFG_SEQ_Task_LoRaStopJoinEvent), CFG_SEQ_Prio_0);
 	}
 	/* USER CODE BEGIN OnStopJoinTimerEvent_Last */
-	HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET); /* LED_BLUE */
-	HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET); /* LED_GREEN */
-	HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, GPIO_PIN_RESET); /* LED_RED */
+	HAL_GPIO_WritePin(LED_GPIO_PORT, LED_PIN, GPIO_PIN_RESET); /* LED_GREEN */
 	/* USER CODE END OnStopJoinTimerEvent_Last */
 }
 

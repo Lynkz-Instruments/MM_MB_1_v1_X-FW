@@ -21,7 +21,8 @@
 #define APP_EEPROM_H
 
 #include <stdint.h>
-#include "main.h"
+
+#include "app_settings.h"
 
 /**
  * @brief  Bind the CAT24C32 driver to the STM32 HAL and verify communication.

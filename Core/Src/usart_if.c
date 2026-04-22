@@ -20,6 +20,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "usart_if.h"
+#include "app_errors.h"
 
 /* USER CODE BEGIN Includes */
 

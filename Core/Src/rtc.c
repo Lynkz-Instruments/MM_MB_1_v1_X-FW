@@ -21,15 +21,12 @@
 #include "rtc.h"
 #include "utils.h"
 
-/* USER CODE BEGIN 0 */
-
 // Globals for backup register state (captured before UART ready)
 uint32_t g_rtc_bkup_dr0 = 0;
 uint32_t g_rtc_bkup_dr1 = 0;
 uint32_t g_rtc_inits = 0;
 uint8_t g_rtc_wut_restored = 0;
 
-/* USER CODE END 0 */
 
 RTC_HandleTypeDef hrtc;
 

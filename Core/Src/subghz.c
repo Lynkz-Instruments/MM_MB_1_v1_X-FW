@@ -19,6 +19,9 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "subghz.h"
+#include "stm32wlxx_hal.h"
+
+#include "app_errors.h"
 
 /* USER CODE BEGIN 0 */
 

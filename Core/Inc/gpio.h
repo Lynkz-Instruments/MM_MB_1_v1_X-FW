@@ -25,22 +25,14 @@
 extern "C" {
 #endif
 
-/* Includes ------------------------------------------------------------------*/
-#include "main.h"
+#include "stm32wlxx_hal.h"
 
-/* USER CODE BEGIN Includes */
-
-/* USER CODE END Includes */
-
-/* USER CODE BEGIN Private defines */
-
-/* USER CODE END Private defines */
+#define TB_DETECT_PIN                           GPIO_PIN_10
+#define TB_DETECT_GPIO_PORT                     GPIOB
+#define LED_PIN                                 GPIO_PIN_1
+#define LED_GPIO_PORT                           GPIOB
 
 void MX_GPIO_Init(void);
-
-/* USER CODE BEGIN Prototypes */
-
-/* USER CODE END Prototypes */
 
 #ifdef __cplusplus
 }

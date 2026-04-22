@@ -19,6 +19,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "i2c.h"
+#include "app_errors.h"
 
 /* USER CODE BEGIN 0 */
 

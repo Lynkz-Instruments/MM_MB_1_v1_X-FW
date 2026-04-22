@@ -31,7 +31,7 @@ extern "C" {
 /* USER CODE BEGIN Includes */
 #include <stdint.h>
 #include "stm32wl_utils.h"
-#include "main.h"
+#include "app_settings.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

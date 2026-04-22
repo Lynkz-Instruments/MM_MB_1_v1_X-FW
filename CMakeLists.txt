@@ -52,6 +52,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/app_accel.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/app_communication.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/app_eeprom.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/app_errors.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/app_settings.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/driver-bma400/bma400.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/driver-cat24c32/cat24c32.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/lib-stm32-uart/stm32_uart.c

@@ -25,24 +25,15 @@
 extern "C" {
 #endif
 
-/* Includes ------------------------------------------------------------------*/
-#include "main.h"
+#include "stm32wlxx_hal.h"
 
-/* USER CODE BEGIN Includes */
-
-/* USER CODE END Includes */
+#define RTC_PREDIV_A                            ((1<<(15-RTC_N_PREDIV_S))-1)
+#define RTC_N_PREDIV_S                          10
+#define RTC_PREDIV_S                            ((1<<RTC_N_PREDIV_S)-1)
 
 extern RTC_HandleTypeDef hrtc;
 
-/* USER CODE BEGIN Private defines */
-
-/* USER CODE END Private defines */
-
 void MX_RTC_Init(void);
-
-/* USER CODE BEGIN Prototypes */
-
-/* USER CODE END Prototypes */
 
 #ifdef __cplusplus
 }

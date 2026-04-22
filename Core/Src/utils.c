@@ -4,11 +4,8 @@ Utils from Charles Marseille, Lynkz Instruments, 2026
 -----------
 */
 #include "utils.h"
-#include "main.h"
 
-extern int8_t g_message_was_sent;
 extern uint32_t g_fcntup;
-extern int8_t g_eeprom_initialized;
 extern RTC_HandleTypeDef hrtc;
 
 void SystemClock_Config(void)
@@ -87,24 +84,6 @@ void EnterShutdownNoBMA(struct AppConfig_s config)
 
     HAL_SuspendTick();
     HAL_PWREx_EnterSHUTDOWNMode();
-}
-
-void Error_Handler(ErrorCode_t error_code)
-{
-    print("Error occurred: %d\r\n", error_code);
-    print("Sending error code on port 66.\r\n");
-    SendErrorCode(error_code);
-    g_message_was_sent = 1;
-    // blink(2,100,0);
-    
-    AppMode_t current_mode = app_get_device_mode();
-    struct AppConfig_s current_config = app_get_device_config();
-    if (current_mode == APP_MODE_OPERATION){
-        EnterShutdownNoBMA(current_config);
-    }
-    else{
-        EnterShutdownWithBMA(current_config);
-    }
 }
 
 /* Robust print function supporting %d and %f (single or multiple) using va_list
