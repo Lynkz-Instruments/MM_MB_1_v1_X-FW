@@ -704,7 +704,7 @@ static void OnSystemReset(void)
 static void StopJoin(void)
 {
 	/* USER CODE BEGIN StopJoin_1 */
-	HAL_GPIO_WritePin(LED_GPIO_PORT, LED_PIN, GPIO_PIN_SET); /* LED_GREEN */
+	// HAL_GPIO_WritePin(LED_GPIO_PORT, LED_PIN, GPIO_PIN_SET); /* LED_GREEN */
 	/* USER CODE END StopJoin_1 */
 
 	UTIL_TIMER_Stop(&TxTimer);
@@ -747,7 +747,7 @@ static void OnStopJoinTimerEvent(void *context)
 	UTIL_SEQ_SetTask((1 << CFG_SEQ_Task_LoRaStopJoinEvent), CFG_SEQ_Prio_0);
 	}
 	/* USER CODE BEGIN OnStopJoinTimerEvent_Last */
-	HAL_GPIO_WritePin(LED_GPIO_PORT, LED_PIN, GPIO_PIN_RESET); /* LED_GREEN */
+	// HAL_GPIO_WritePin(LED_GPIO_PORT, LED_PIN, GPIO_PIN_RESET); /* LED_GREEN */
 	/* USER CODE END OnStopJoinTimerEvent_Last */
 }
 

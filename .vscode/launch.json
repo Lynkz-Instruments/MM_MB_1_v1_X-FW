@@ -15,30 +15,12 @@
             "targetId": 1,
             "showDevDebugOutput": "none",
             "svdFile": "${workspaceFolder}/STM32WL5x_CM4.svd",
-            "preLaunchCommands": [
-                "set mem inaccessible-by-default off"
-            ],
-            "preAttachCommands": [
-                "monitor tpwr disable",
-                "shell sleep 0.5",
-                "monitor tpwr enable",
-                "shell sleep 0.2",
-                "monitor tpwr enable",
-                "shell sleep 0.2",
-                "monitor swdp_scan",
-                "shell sleep 0.1"
-            ],
-            "postAttachCommands": [
-                "monitor vector_catch disable all"
-            ],
+
             "postLaunchCommands": [
                 "monitor erase_mass",
                 "load",
                 "break main",
                 "set $pc = Reset_Handler",
-                // "continue"
-            ],
-            "postRestartCommands": [
                 // "continue"
             ]
         }

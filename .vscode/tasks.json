@@ -2,6 +2,13 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
+			"label": "BMP Power Cycle",
+			"type": "shell",
+			"command": "gdb-multiarch --quiet --batch -ex 'target extended-remote /dev/ttyACM0' -ex 'monitor swd_scan' -ex 'monitor tpwr disable' -ex 'shell sleep 0.5' -ex 'monitor tpwr enable' -ex 'shell sleep 0.5'",
+			"presentation": { "reveal": "silent", "close": true },
+			"problemMatcher": []
+		},
+		{
 			"type": "cmake",
 			"label": "build",
 			"command": "build",
