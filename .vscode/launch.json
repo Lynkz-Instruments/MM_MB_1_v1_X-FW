@@ -15,7 +15,9 @@
             "targetId": 1,
             "showDevDebugOutput": "none",
             "svdFile": "${workspaceFolder}/STM32WL5x_CM4.svd",
-
+            "preLaunchCommands": [
+                "monitor connect_rst enable"
+            ],
             "postLaunchCommands": [
                 "monitor erase_mass",
                 "load",
