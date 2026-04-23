@@ -9,9 +9,6 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
 
-  /*Configure GPIO pin Output Level */
-  // HAL_GPIO_WritePin(LED_GPIO_PORT, LED_PIN, GPIO_PIN_RESET);
-
   /*Configure GPIO pins : PA14 PA12 PA15 PA13
                            PA11 PA0 PA9
                            PA6 PA1 PA3 PA2
@@ -27,11 +24,11 @@ void MX_GPIO_Init(void)
 
   /*Configure GPIO pins : PB15 PB3 PB4 PB7
                            PB9 PB14 PB8 PB13
-                           PB2 PB12 PB1
+                           PB2 PB12
                            PB0 PB11 PB10 */
   GPIO_InitStruct.Pin = GPIO_PIN_15|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_7
                           |GPIO_PIN_9|GPIO_PIN_14|GPIO_PIN_8|GPIO_PIN_13
-                          |GPIO_PIN_2|GPIO_PIN_12|GPIO_PIN_1
+                          |GPIO_PIN_2|GPIO_PIN_12
                           |GPIO_PIN_0|GPIO_PIN_11|GPIO_PIN_10;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -46,13 +43,21 @@ void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
 
-  // Green led pin
+  // Green led pin — WritePin before Init pre-loads ODR so pin drives high the instant it switches to output
+  HAL_GPIO_WritePin(LED_GPIO_PORT, LED_PIN, GPIO_PIN_SET); /* LED_GREEN OFF */
   GPIO_InitStruct.Pin = LED_PIN;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LED_GPIO_PORT, &GPIO_InitStruct);
+}
 
-  HAL_GPIO_WritePin(LED_GPIO_PORT, LED_PIN, GPIO_PIN_SET);
-
+void blink_led(uint8_t times, uint16_t delay_ms)
+{
+    for (uint8_t i = 0; i < times; i++) {
+        HAL_GPIO_WritePin(LED_GPIO_PORT, LED_PIN, GPIO_PIN_RESET); /* LED_GREEN ON */
+        HAL_Delay(delay_ms);
+        HAL_GPIO_WritePin(LED_GPIO_PORT, LED_PIN, GPIO_PIN_SET); /* LED_GREEN OFF */
+        HAL_Delay(delay_ms);
+    }
 }

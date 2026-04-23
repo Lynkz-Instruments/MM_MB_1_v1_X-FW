@@ -33,6 +33,7 @@ extern "C" {
 #define LED_GPIO_PORT                           GPIOB
 
 void MX_GPIO_Init(void);
+void blink_led(uint8_t times, uint16_t delay_ms);
 
 #ifdef __cplusplus
 }

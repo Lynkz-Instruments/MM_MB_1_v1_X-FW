@@ -48,6 +48,7 @@ int main(void)
     RCC->CSR |= RCC_CSR_RMVF; // Clear reset flags after reading
 
     printf("MissMetal %s Started!\r\n", TOSTRING(FW_VERSION_MAJOR) "." TOSTRING(FW_VERSION_MINOR) "." TOSTRING(FW_VERSION_BUGFIX));
+    blink_led(2, 50);
 
     rslt = app_eeprom_init();
     if (rslt != 0) {
@@ -90,6 +91,11 @@ int main(void)
         SendHeartBeatPayload(current_mode, current_config, temperature);
         LM_Delay(500, 0);
     }
+
+    // if (CoreDebug->DHCSR & CoreDebug_DHCSR_C_DEBUGEN_Msk) {
+    //     print("Debugger attached: skipping SHUTDOWN.\r\n");
+    //     while (1) { __NOP(); }
+    // }
 
     // Re-read mode and config in case a downlink changed them.
     current_mode = app_get_device_mode();
