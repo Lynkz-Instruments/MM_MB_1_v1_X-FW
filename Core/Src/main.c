@@ -97,9 +97,19 @@ int main(void)
     //     while (1) { __NOP(); }
     // }
 
+    // Store previous mode and config.
+    AppMode_t prev_mode = current_mode;
+    struct AppConfig_s prev_config = current_config;
     // Re-read mode and config in case a downlink changed them.
     current_mode = app_get_device_mode();
     current_config = app_get_device_config();
+
+    if (app_mode_changed(prev_mode, current_mode) || app_config_changed(prev_config, current_config)) {
+        printf("Config changed from downlink, sending updated heartbeat\r\n");
+        SendHeartBeatPayload(current_mode, current_config, temperature);
+        LM_Delay(500, 0);
+    }
+
     if (current_mode == APP_MODE_OPERATION) {
         EnterShutdownNoBMA(current_config);
     } else {

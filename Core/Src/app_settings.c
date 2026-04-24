@@ -46,6 +46,17 @@ uint32_t app_get_fcntup(void)
     return s_fcntup;
 }
 
+bool app_mode_changed(AppMode_t prev, AppMode_t current)
+{
+    return prev != current;
+}
+
+bool app_config_changed(struct AppConfig_s prev, struct AppConfig_s current)
+{
+    return prev.wake_thresh != current.wake_thresh ||
+           prev.sleep_time_minutes != current.sleep_time_minutes;
+}
+
 void app_set_device_mode(AppMode_t mode)
 {
     if (mode >= APP_MODE_MAX) return;

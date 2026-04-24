@@ -39,6 +39,16 @@ struct AppConfig_s {
 #define SLEEP_TIME_DEFAULT      (5)
 
 /**
+ * @brief  Return true if two modes differ.
+ */
+bool app_mode_changed(AppMode_t prev, AppMode_t current);
+
+/**
+ * @brief  Return true if any config field differs between prev and current.
+ */
+bool app_config_changed(struct AppConfig_s prev, struct AppConfig_s current);
+
+/**
  * @brief  Write a validated mode to EEPROM. No-op if mode is out of range or
  *         STORAGE (not yet implemented).
  */
