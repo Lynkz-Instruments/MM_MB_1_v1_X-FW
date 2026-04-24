@@ -16,6 +16,7 @@
 #include <stdbool.h>
 
 #include "app_errors.h"
+#include "utils.h"
 
 #define EEPROM_PROVISIONED_FLAG_ADDR            0x00                            // 1 byte — 0xA5 after first boot
 #define EEPROM_FCNTUP_ADDR                      0x01                            // 4 bytes
@@ -42,7 +43,7 @@ static int8_t eeprom_i2c_read(uint8_t dev_addr, uint8_t *data, uint16_t len)
 
 static void eeprom_delay_ms(uint32_t ms)
 {
-    HAL_Delay(ms);
+    LM_Delay(ms, 0);
 }
 
 static const CAT24C32_IO_t eeprom_io = {
