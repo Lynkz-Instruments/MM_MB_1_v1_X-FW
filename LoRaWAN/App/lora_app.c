@@ -489,6 +489,8 @@ void SendTxData(void)
     APP_LOG(TS_ON, VLEVEL_L, "FCntUp: %d\r\n", app_get_fcntup());
 
     if (LmHandlerIsBusy() == false){
+		LmHandlerSetTxPower(LORAWAN_DEFAULT_TX_POWER);
+		LmHandlerSetTxDatarate(LORAWAN_DEFAULT_DATA_RATE);
         status = LmHandlerSend(&AppData, LmHandlerParams.IsTxConfirmed, false);
         if (LORAMAC_HANDLER_SUCCESS == status){
             APP_LOG(TS_ON, VLEVEL_L, "MESSAGE SENT\r\n");
@@ -497,7 +499,11 @@ void SendTxData(void)
             if (nextTxIn > 0){
                 APP_LOG(TS_ON, VLEVEL_L, "Next Tx in  : ~%d second(s)\r\n", (nextTxIn / 1000));
             }
+        } else {
+            APP_LOG(TS_ON, VLEVEL_L, "LmHandlerSend failed: %d\r\n", status);
         }
+    } else {
+        APP_LOG(TS_ON, VLEVEL_L, "LmHandler busy, TX skipped\r\n");
     }
 
 	uint32_t start = HAL_GetTick(); 

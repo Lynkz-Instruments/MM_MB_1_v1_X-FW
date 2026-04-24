@@ -106,7 +106,7 @@ extern "C"
 /*!
  * Maximal Tx output power that can be used by the node
  */
-#define US915_MAX_TX_POWER                          TX_POWER_14
+#define US915_MAX_TX_POWER                          TX_POWER_0
 
 /*!
  * Default Tx output power used by the node

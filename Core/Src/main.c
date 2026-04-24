@@ -89,21 +89,10 @@ int main(void)
     printf("Temperature: %d dC\r\n", temperature);
 
     // Sending heartbeat payload.
-    uint32_t cryptoFCnt = 0;
-    LoRaMacCryptoGetFCntUp( &cryptoFCnt );
-    uint32_t nvmFCnt = app_get_fcntup();
-
-    printf("Crypto FCntUp: %lu\r\n", cryptoFCnt);
-    printf("EEPROM FCntUp: %lu\r\n", nvmFCnt);
-
-    size_t macCmdsSize = 0;
-    LoRaMacCommandsGetSizeSerializedCmds( &macCmdsSize );
-    printf("Pending MAC cmds: %d bytes\r\n", macCmdsSize);
-
     if (current_mode == APP_MODE_OPERATION || current_mode == APP_MODE_BEACON) {
         printf("Sending heart beat payload\r\n");
         SendHeartBeatPayload(current_mode, current_config, temperature);
-        LM_Delay(3000, 0);
+        LM_Delay(500, 0);
     }
 
     // if (CoreDebug->DHCSR & CoreDebug_DHCSR_C_DEBUGEN_Msk) {
@@ -118,18 +107,11 @@ int main(void)
     current_mode = app_get_device_mode();
     current_config = app_get_device_config();
 
-    //if (app_mode_changed(prev_mode, current_mode) || app_config_changed(prev_config, current_config)) {
+    if (app_mode_changed(prev_mode, current_mode) || app_config_changed(prev_config, current_config)) {
         printf("Config changed from downlink, sending updated heartbeat\r\n");
-        LoRaMacCryptoGetFCntUp( &cryptoFCnt );
-        nvmFCnt = app_get_fcntup();
-        printf("Crypto FCntUp: %lu\r\n", cryptoFCnt);
-        printf("EEPROM FCntUp: %lu\r\n", nvmFCnt);
-        LoRaMacCommandsGetSizeSerializedCmds( &macCmdsSize );
-        printf("Pending MAC cmds: %d bytes\r\n", macCmdsSize);
-        LM_Delay(2000, 0);
         SendHeartBeatPayload(current_mode, current_config, temperature);
-        LM_Delay(3000, 0);
-    //}
+        LM_Delay(500, 0);
+    }
 
     if (current_mode == APP_MODE_OPERATION) {
         EnterShutdownNoBMA(current_config);
