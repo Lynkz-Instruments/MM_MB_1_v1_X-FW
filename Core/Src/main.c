@@ -29,8 +29,6 @@
 #include "utils.h"
 #include "stm32_systime.h"
 
-#include "LoRaMacCrypto.h"
-#include "LoRaMacCommands.h"
 
 int main(void)
 {
