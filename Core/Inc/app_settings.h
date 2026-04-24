@@ -35,7 +35,7 @@ struct AppConfig_s {
 #define WAKE_THRESHOLD_DEFAULT  (10)
 
 #define SLEEP_TIME_MIN          (1)
-#define SLEEP_TIME_MAX          (120)
+#define SLEEP_TIME_MAX          (1440)
 #define SLEEP_TIME_DEFAULT      (5)
 
 /**
