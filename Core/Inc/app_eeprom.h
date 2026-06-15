@@ -78,4 +78,16 @@ bool app_eeprom_is_provisioned(void);
  */
 void app_eeprom_set_provisioned(void);
 
+/**
+ * @brief  Persist the RF test configuration struct to EEPROM.
+ * @param  config  RF test configuration to store (packed, 4 bytes).
+ */
+void app_eeprom_write_rf_test_config(struct AppRfTestConfig_s config);
+
+/**
+ * @brief  Read the RF test configuration struct from EEPROM.
+ * @return Stored configuration, or zero-initialised struct if the read fails.
+ */
+struct AppRfTestConfig_s app_eeprom_read_rf_test_config(void);
+
 #endif // APP_EEPROM_H

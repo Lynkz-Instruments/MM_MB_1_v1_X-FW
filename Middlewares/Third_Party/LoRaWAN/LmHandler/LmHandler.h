@@ -462,6 +462,8 @@ LmHandlerErrorStatus_t LmHandlerPackageRegister( uint8_t id, void *params );
  */
 LmHandlerErrorStatus_t LmHandlerStop( void );
 
+LmHandlerErrorStatus_t LmHandlerResetRadioCallbacks(void);
+
 /*!
  * \brief Halt the LoRa stack with break of current process
  *

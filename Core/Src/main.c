@@ -29,6 +29,9 @@
 #include "utils.h"
 #include "stm32_systime.h"
 
+#define RF_TEST_PAYLOAD_COUNT        5     /* raw test packets per wake cycle */
+#define RF_TEST_PAYLOAD_INTERVAL_MS  500  /* ms between each test packet */
+#define RF_TEST_HEARTBEAT_INTERVAL   5     /* send LoRaWAN HB every N cycles (fcntup mod) */
 
 int main(void)
 {
@@ -60,10 +63,11 @@ int main(void)
     }
 
     AppMode_t current_mode = app_get_device_mode();
-    printf("Current device mode: %s\r\n", 
-        current_mode == APP_MODE_STORAGE ? "STORAGE" :
-        current_mode == APP_MODE_OPERATION ? "OPERATION" : 
-        current_mode == APP_MODE_BEACON ? "BEACON": "NONE");
+    printf("Current device mode: %s\r\n",
+        current_mode == APP_MODE_STORAGE   ? "STORAGE"   :
+        current_mode == APP_MODE_OPERATION ? "OPERATION" :
+        current_mode == APP_MODE_BEACON    ? "BEACON"    :
+        current_mode == APP_MODE_RF_TEST   ? "RF_TEST"   : "UNKNOWN");
 
     struct AppConfig_s current_config = app_get_device_config();
     printf("Current device config:\r\n");
@@ -87,6 +91,7 @@ int main(void)
     printf("Temperature: %d dC\r\n", temperature);
 
     // Sending heartbeat payload.
+    struct AppRfTestConfig_s prev_rf_config = app_get_rf_test_config();
     if (current_mode == APP_MODE_OPERATION || current_mode == APP_MODE_BEACON) {
         printf("Sending heart beat payload\r\n");
         SendHeartBeatPayload(current_mode, current_config, temperature);
@@ -109,6 +114,47 @@ int main(void)
         printf("Config changed from downlink, sending updated heartbeat\r\n");
         SendHeartBeatPayload(current_mode, current_config, temperature);
         LM_Delay(500, 0);
+    }
+
+    if (app_rf_test_config_changed(prev_rf_config, app_get_rf_test_config())) {
+        printf("RF test config changed from downlink, sending confirmation\r\n");
+        SendRfTestConfigPayload();
+        LM_Delay(500, 0);
+    }
+
+    if (current_mode == APP_MODE_RF_TEST) {
+        uint32_t cycle = 0;
+        bool rf_test_active = true;
+
+        while (rf_test_active) {
+            // Periodic LoRaWAN uplink keeps a downlink window open so the
+            // user can send SET_DEVICE_MODE to exit RF_TEST mode.
+            // EEPROM is only read here, after a LoRaWAN TX — the only
+            // moment a downlink could have changed the mode.
+            if (cycle % RF_TEST_HEARTBEAT_INTERVAL == 0) {
+                struct AppRfTestConfig_s rf_cfg_before = app_get_rf_test_config();
+                printf("RF_TEST: config uplink (cycle=%lu)\r\n", cycle);
+                SendRfTestConfigPayload();
+                LM_Delay(500, 0);
+                if (app_rf_test_config_changed(rf_cfg_before, app_get_rf_test_config())) {
+                    printf("RF_TEST: config updated via downlink, sending confirmation\r\n");
+                    SendRfTestConfigPayload();
+                    LM_Delay(500, 0);
+                }
+                if (app_get_device_mode() != APP_MODE_RF_TEST) {
+                    rf_test_active = false;
+                    break;
+                }
+            }
+
+            for (int i = 0; i < RF_TEST_PAYLOAD_COUNT; i++) {
+                printf("RF_TEST: payload %d/%d\r\n", i + 1, RF_TEST_PAYLOAD_COUNT);
+                SendLoRaModTestPayload();
+                LM_Delay(RF_TEST_PAYLOAD_INTERVAL_MS, 0);
+            }
+            cycle++;
+        }
+        current_mode = app_get_device_mode();
     }
 
     if (current_mode == APP_MODE_OPERATION) {

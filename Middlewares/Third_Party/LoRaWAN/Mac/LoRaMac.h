@@ -483,6 +483,7 @@ LoRaMacStatus_t LoRaMacDeInitialization( void );
 
 LoRaMacStatus_t LoRaMacProcessMicForDatablock( uint8_t *buffer, uint32_t size, uint16_t sessionCnt, uint8_t fragIndex, uint32_t descriptor, uint32_t *mic );
 
+LoRaMacStatus_t resetRadioCallbacks(void);
 
 /*!
  * \brief   Resets the internal state machine.

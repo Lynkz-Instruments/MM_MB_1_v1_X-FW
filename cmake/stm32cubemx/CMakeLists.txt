@@ -38,6 +38,7 @@ set(MX_Application_Src
     ${CMAKE_SOURCE_DIR}/LoRaWAN/App/app_lorawan.c
     ${CMAKE_SOURCE_DIR}/LoRaWAN/App/CayenneLpp.c
     ${CMAKE_SOURCE_DIR}/LoRaWAN/App/lora_app.c
+    ${CMAKE_SOURCE_DIR}/LoRaWAN/App/lora_mod.c
     ${CMAKE_SOURCE_DIR}/LoRaWAN/App/lora_info.c
     ${CMAKE_SOURCE_DIR}/LoRaWAN/Target/radio_board_if.c
     ${CMAKE_SOURCE_DIR}/Core/Src/main.c

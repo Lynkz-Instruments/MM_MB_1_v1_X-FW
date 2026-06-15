@@ -1510,6 +1510,20 @@ LmHandlerErrorStatus_t LmHandlerStop( void )
     }
 }
 
+LmHandlerErrorStatus_t LmHandlerRestart( void )
+{
+    if (LmHandlerStop() == LORAMAC_HANDLER_SUCCESS){
+    	return LmHandlerConfigure(&LmHandlerParams);
+    }
+    return LORAMAC_HANDLER_BUSY_ERROR;
+}
+
+LmHandlerErrorStatus_t LmHandlerResetRadioCallbacks(void)
+{
+	resetRadioCallbacks();
+	return LORAMAC_HANDLER_SUCCESS;
+}
+
 LmHandlerErrorStatus_t LmHandlerHalt( void )
 {
     if( LoRaMacHalt() == LORAMAC_STATUS_OK )

@@ -42,6 +42,7 @@
 #include "utils.h"
 #include "app_communication.h"
 #include "gpio.h"
+#include "lora_mod.h"
 /* USER CODE END Includes */
 
 /* External variables ---------------------------------------------------------*/
@@ -862,4 +863,56 @@ void SendErrorCode(uint8_t error_code){
     AppData.BufferSize = i;
     SendTxData();
 }
+
+void SendLoRaModTestPayload(void)
+{
+	uint8_t buffer[] = { 0x4C, 0x59, 0x4E, 0x4B, 0x5A, 0x4C }; // Example payload
+
+	RadioSetDefaultConfig();
+	RadioTx(buffer, sizeof(buffer));
+}
+
+void SendRfTestConfigPayload(void)
+{
+    struct AppRfTestConfig_s rf_config = app_get_rf_test_config();
+    AppData.Port = LORAWAN_USER_RF_TEST_PORT;
+    memcpy(AppData.Buffer, (uint8_t *)&rf_config, sizeof(struct AppRfTestConfig_s));
+    AppData.BufferSize = sizeof(struct AppRfTestConfig_s);
+    printf("RF_TEST: config uplink freq=%lu Hz\r\n", rf_config.frequency_hz);
+    SendTxData();
+}
+
+void RadioSetDefaultConfig(void)
+{
+	ModParameter_t modParam = { 0 };
+	struct AppRfTestConfig_s rf = app_get_rf_test_config();
+
+	radio_get_config(&modParam);
+
+	modParam.modulation      = TEST_LORA;
+	modParam.freq            = rf.frequency_hz;
+	modParam.power           = rf.power_dbm;
+	modParam.bandwidth       = rf.bandwidth;
+	modParam.loraSf_datarate = rf.sf;
+	modParam.codingRate      = rf.coding_rate;
+	modParam.lna             = rf.lna;
+	modParam.paBoost         = rf.pa_boost;
+	modParam.lowDrOpt        = rf.low_dr_opt;
+
+	radio_set_config(&modParam);
+
+	printf("RF config: freq=%lu Hz pwr=%d dBm bw=%u sf=%u cr=%u lna=%u paBoost=%u lowDrOpt=%u\r\n",
+	       rf.frequency_hz, rf.power_dbm, rf.bandwidth,
+	       rf.sf, rf.coding_rate, rf.lna, rf.pa_boost, rf.low_dr_opt);
+}
+
+void RadioTx(uint8_t *buffer, unsigned size)
+{
+    if (radio_tx(buffer, size) != 0){
+    	APP_LOG(TS_ON, VLEVEL_L, "Radio TX failed\r\n");
+    }
+
+    LmHandlerResetRadioCallbacks();
+}
+
 /* USER CODE END PRIVATE FUNCTIONS */

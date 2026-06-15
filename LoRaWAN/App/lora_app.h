@@ -43,6 +43,7 @@ extern "C" {
 
 /* LoraWAN application configuration (Mw is configured by lorawan_conf.h) */
 #define ACTIVE_REGION                               LORAMAC_REGION_US915
+// #define ACTIVE_REGION                               LORAMAC_REGION_EU433
 
 /* USER CODE BEGIN EC_CAYENNE_LPP */
 /*!
@@ -129,6 +130,7 @@ extern "C" {
 #define LORAWAN_USER_RESET_REASON_PORT              67
 #define LORAWAN_USER_BEACON_PORT                    68
 #define LORAWAN_USER_HEART_BEAT_PORT                69
+#define LORAWAN_USER_RF_TEST_PORT                   70
 
 /* USER CODE END EC */
 
@@ -149,8 +151,12 @@ void SendTxData(void);
 void SendBeaconPayload(uint16_t *max_accel, int16_t *bma400_temperature);
 void SendHeartBeatPayload(AppMode_t mode, struct AppConfig_s config, uint16_t temperature);
 void SendResetReason(ResetReason reset_reason);
+void SendLoRaModTestPayload(void);
+void SendRfTestConfigPayload(void);
 void SendErrorCode(uint8_t error_code);
 void LoRaWAN_checkTxDone(void);
+void RadioSetDefaultConfig(void);
+void RadioTx(uint8_t *buffer, unsigned size);
 
 /* USER CODE END EFP */
 

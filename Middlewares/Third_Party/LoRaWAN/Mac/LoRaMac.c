@@ -6804,6 +6804,14 @@ LoRaMacStatus_t LoRaMacDeInitialization( void )
     }
 }
 
+LoRaMacStatus_t resetRadioCallbacks(void)
+{
+	Radio.Init( &MacCtx.RadioEvents );
+	Radio.SetPublicNetwork( Nvm.MacGroup2.PublicNetwork );
+	Radio.Sleep();
+	return LORAMAC_STATUS_OK;
+}
+
 void LoRaMacReset( void )
 {
     // Reset state machine

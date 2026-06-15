@@ -22,6 +22,7 @@
 #define EEPROM_FCNTUP_ADDR                      0x01                            // 4 bytes
 #define EEPROM_DEVICE_MODE_ADDR                 0x05                            // 1 byte
 #define EEPROM_DEVICE_CONFIG_ADDR               0x06                            // 3 bytes
+#define EEPROM_RF_TEST_CONFIG_ADDR              0x09                            // 4 bytes
 
 #define EEPROM_PROVISIONED_MAGIC                0xA5
 
@@ -179,4 +180,30 @@ uint32_t app_eeprom_read_fcntup(void)
         }
     }
     return fcntup;
+}
+
+/* --------------------------------------------------------------------------
+ * RF test configuration
+ * -------------------------------------------------------------------------- */
+
+void app_eeprom_write_rf_test_config(struct AppRfTestConfig_s config)
+{
+    if (!s_initialized) return;
+    int8_t rslt = CAT24C32_Write(EEPROM_RF_TEST_CONFIG_ADDR, (uint8_t *)&config, sizeof(struct AppRfTestConfig_s));
+    if (rslt != CAT24C32_OK) {
+        printf("EEPROM Write Error (RF Test Config)!\r\n");
+        Error_Handler(ERROR_EEPROM_WRITE);
+    }
+}
+
+struct AppRfTestConfig_s app_eeprom_read_rf_test_config(void)
+{
+    struct AppRfTestConfig_s config = {0};
+    if (!s_initialized) return config;
+    int8_t rslt = CAT24C32_Read(EEPROM_RF_TEST_CONFIG_ADDR, (uint8_t *)&config, sizeof(struct AppRfTestConfig_s));
+    if (rslt != CAT24C32_OK) {
+        printf("EEPROM Read Error (RF Test Config)!\r\n");
+        Error_Handler(ERROR_EEPROM_READ);
+    }
+    return config;
 }
