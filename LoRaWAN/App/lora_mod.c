@@ -38,6 +38,7 @@
 #define TX_TIMEOUT_VALUE              60000     /* 60s */
 #define LORA_FIX_LENGTH_PAYLOAD_OFF   false
 #define LORA_IQ_INVERSION_OFF         false
+#define TX_RADIO_TONE                 (1<<0)
 #define TX_RADIO_MODU                 (1<<2)
 #define RX_RADIO_MODU                 (1<<3)
 #define RX_CONTINUOUS_ON              1
@@ -111,6 +112,24 @@ int32_t radio_get_config(ModParameter_t *Param)
   return 0;
 }
 
+int32_t radio_tone(void)
+{
+  if ((RadioState & TX_RADIO_TONE) != TX_RADIO_TONE)
+  {
+    RadioState |= TX_RADIO_TONE;
+    Radio.SetTxContinuousWave(modParam.freq, modParam.power, CONTINUOUS_TIMEOUT);
+    return 0;
+  }
+  return -1;
+}
+
+int32_t radio_stop(void)
+{
+  RadioState = 0;
+  Radio.Sleep();
+  return 0;
+}
+
 int32_t radio_tx(uint8_t * buffer, unsigned size)
 {
 	TxConfigGeneric_t TxConfig;
@@ -150,7 +169,7 @@ int32_t radio_tx(uint8_t * buffer, unsigned size)
 			TxConfig.fsk.CrcPolynomial = 0x1021;
 			TxConfig.fsk.Whitening = RADIO_FSK_DC_FREE_OFF;
 			Radio.RadioSetTxGenericConfig(GENERIC_FSK, &TxConfig, modParam.power, TX_TIMEOUT_VALUE);
-		 }
+		}
 		else if (modParam.modulation == TEST_MSK){
 			// msk modulation
 			uint8_t syncword[] = { 0xC1, 0x94, 0xC1, 0x00, 0x00, 0x00, 0x00, 0x00 };

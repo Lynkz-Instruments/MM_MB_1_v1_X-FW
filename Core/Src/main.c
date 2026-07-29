@@ -29,9 +29,7 @@
 #include "utils.h"
 #include "stm32_systime.h"
 
-#define RF_TEST_PAYLOAD_COUNT        5     /* raw test packets per wake cycle */
-#define RF_TEST_PAYLOAD_INTERVAL_MS  500  /* ms between each test packet */
-#define RF_TEST_HEARTBEAT_INTERVAL   5     /* send LoRaWAN HB every N cycles (fcntup mod) */
+#define RF_TEST_TONE_DURATION_MS     20000 /* how long the test tone stays on before the config uplink */
 
 int main(void)
 {
@@ -127,30 +125,29 @@ int main(void)
         bool rf_test_active = true;
 
         while (rf_test_active) {
-            // Periodic LoRaWAN uplink keeps a downlink window open so the
-            // user can send SET_DEVICE_MODE to exit RF_TEST mode.
+            struct AppRfTestConfig_s rf_cfg_before = app_get_rf_test_config();
+
+            printf("RF_TEST: tone on for %u ms (cycle=%lu)\r\n", RF_TEST_TONE_DURATION_MS, cycle);
+            SendLoRaModTestPayload();
+            LM_Delay(RF_TEST_TONE_DURATION_MS, 0);
+
+            // Config uplink stops the tone and opens a downlink window so the
+            // user can send SET_RF_TEST_CONFIG or SET_DEVICE_MODE.
             // EEPROM is only read here, after a LoRaWAN TX — the only
             // moment a downlink could have changed the mode.
-            if (cycle % RF_TEST_HEARTBEAT_INTERVAL == 0) {
-                struct AppRfTestConfig_s rf_cfg_before = app_get_rf_test_config();
-                printf("RF_TEST: config uplink (cycle=%lu)\r\n", cycle);
+            printf("RF_TEST: config uplink (cycle=%lu)\r\n", cycle);
+            SendRfTestConfigPayload();
+            LM_Delay(500, 0);
+
+            if (app_rf_test_config_changed(rf_cfg_before, app_get_rf_test_config())) {
+                printf("RF_TEST: config updated via downlink, sending confirmation\r\n");
                 SendRfTestConfigPayload();
                 LM_Delay(500, 0);
-                if (app_rf_test_config_changed(rf_cfg_before, app_get_rf_test_config())) {
-                    printf("RF_TEST: config updated via downlink, sending confirmation\r\n");
-                    SendRfTestConfigPayload();
-                    LM_Delay(500, 0);
-                }
-                if (app_get_device_mode() != APP_MODE_RF_TEST) {
-                    rf_test_active = false;
-                    break;
-                }
             }
 
-            for (int i = 0; i < RF_TEST_PAYLOAD_COUNT; i++) {
-                printf("RF_TEST: payload %d/%d\r\n", i + 1, RF_TEST_PAYLOAD_COUNT);
-                SendLoRaModTestPayload();
-                LM_Delay(RF_TEST_PAYLOAD_INTERVAL_MS, 0);
+            if (app_get_device_mode() != APP_MODE_RF_TEST) {
+                rf_test_active = false;
+                break;
             }
             cycle++;
         }

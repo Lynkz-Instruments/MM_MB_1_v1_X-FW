@@ -63,6 +63,8 @@ typedef struct
 #define TEST_MSK                           3
 
 
+int32_t radio_tone(void);
+int32_t radio_stop(void);
 int32_t radio_tx(uint8_t * buffer, unsigned size);
 
 int32_t radio_rx(int32_t rx_timeout_ms);

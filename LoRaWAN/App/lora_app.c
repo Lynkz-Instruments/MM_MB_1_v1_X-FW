@@ -866,14 +866,14 @@ void SendErrorCode(uint8_t error_code){
 
 void SendLoRaModTestPayload(void)
 {
-	uint8_t buffer[] = { 0x4C, 0x59, 0x4E, 0x4B, 0x5A, 0x4C }; // Example payload
-
 	RadioSetDefaultConfig();
-	RadioTx(buffer, sizeof(buffer));
+	radio_tone();
 }
 
 void SendRfTestConfigPayload(void)
 {
+    radio_stop(); // Always stop an in-progress test tone before a LoRaWAN uplink.
+
     struct AppRfTestConfig_s rf_config = app_get_rf_test_config();
     AppData.Port = LORAWAN_USER_RF_TEST_PORT;
     memcpy(AppData.Buffer, (uint8_t *)&rf_config, sizeof(struct AppRfTestConfig_s));
