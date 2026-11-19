@@ -70,7 +70,7 @@ void EnterShutdown(struct AppConfig_s config)
     __HAL_PWR_CLEAR_FLAG(PWR_FLAG_WU);
     HAL_RTCEx_SetWakeUpTimer_IT(&hrtc, (config.sleep_time_minutes * 60), RTC_WAKEUPCLOCK_CK_SPRE_16BITS, 0);
 
-    gpio_release_led(); // Analog mode lets R14 hold LED B low through VDD12 ramp-down
+    gpio_release_led(); // Analog (high-Z): no current path through the active-low LED during shutdown
 
     /* STM32WL5M is a dual-core WL55: the system only enters the lowest mode
      * BOTH CPUs allow. HAL_PWREx_EnterSHUTDOWNMode() sets CPU1's LPMS only;

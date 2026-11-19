@@ -1,5 +1,10 @@
 #include "gpio.h"
 
+/* LED_G is active-low on the MissMetal board (lit when PB1 is driven LOW) -
+ * the opposite of TA's board. */
+#define LED_ON_STATE    GPIO_PIN_RESET
+#define LED_OFF_STATE   GPIO_PIN_SET
+
 void MX_GPIO_Init(void)
 {
     GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -58,8 +63,8 @@ void MX_GPIO_Init(void)
     HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
 
-    // Pre-load ODR to LOW before switching to output so the pin never glitches HIGH.
-    HAL_GPIO_WritePin(LED_GPIO_PORT, LED_PIN, GPIO_PIN_RESET);
+    // Pre-load ODR to "off" before switching to output so the LED never glitches on.
+    HAL_GPIO_WritePin(LED_GPIO_PORT, LED_PIN, LED_OFF_STATE);
     GPIO_InitStruct.Pin = LED_PIN;
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -70,9 +75,9 @@ void MX_GPIO_Init(void)
 void gpio_blink_led(uint8_t times, uint16_t delay_ms)
 {
     for (uint8_t i = 0; i < times; i++) {
-        HAL_GPIO_WritePin(LED_GPIO_PORT, LED_PIN, GPIO_PIN_SET); /* LED_GREEN ON */
+        HAL_GPIO_WritePin(LED_GPIO_PORT, LED_PIN, LED_ON_STATE);
         HAL_Delay(delay_ms);
-        HAL_GPIO_WritePin(LED_GPIO_PORT, LED_PIN, GPIO_PIN_RESET); /* LED_GREEN OFF */
+        HAL_GPIO_WritePin(LED_GPIO_PORT, LED_PIN, LED_OFF_STATE);
         HAL_Delay(delay_ms);
     }
 }

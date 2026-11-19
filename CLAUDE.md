@@ -107,7 +107,7 @@ Mode is persisted in EEPROM at `EEPROM_DEVICE_MODE_ADDR` (0x05). Mode and config
 | `LoRaWAN/App/lora_app.h` | LoRaWAN region, data rate, TX power, ports, activation type |
 | `LoRaWAN/App/lynkz_key_gen.c` | DevEUI / ABP session-key derivation from the MCU unique ID |
 | `LoRaWAN/Target/lorawan_conf.h` | Enabled regions, context management, Class B toggle |
-| `Core/Inc/gpio.h` | LED, BMA400 interrupt and test-board-detect pin definitions |
+| `Core/Inc/gpio.h` | LED, BMA400 interrupt and test-board-detect pin definitions (LED_G on PB1 is active-low on MissMetal; polarity set in `gpio.c`) |
 | `Core/Inc/app_settings.h` | `AppMode_t`, `AppConfig_s`, threshold/sleep-time limits |
 | `Core/Src/app_eeprom.c` | EEPROM address map (all `#define EEPROM_*_ADDR` constants live here) |
 | `Core/Inc/sys_conf.h` | Logging verbosity, low-power mode, debugger pin enable |
