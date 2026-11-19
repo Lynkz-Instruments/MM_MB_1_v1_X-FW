@@ -41,6 +41,11 @@ extern I2C_HandleTypeDef hi2c1;
 void MX_I2C1_Init(void);
 
 /* USER CODE BEGIN Prototypes */
+/**
+  * @brief  Re-run I2C1 peripheral init after a STOP2 wake, which does not
+  *         retain I2Cx peripheral configuration. Mirrors vcom_Resume().
+  */
+void i2c_Resume(void);
 
 /* USER CODE END Prototypes */
 

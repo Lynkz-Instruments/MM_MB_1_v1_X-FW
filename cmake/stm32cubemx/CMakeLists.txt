@@ -40,6 +40,7 @@ set(MX_Application_Src
     ${CMAKE_SOURCE_DIR}/LoRaWAN/App/lora_app.c
     ${CMAKE_SOURCE_DIR}/LoRaWAN/App/lora_mod.c
     ${CMAKE_SOURCE_DIR}/LoRaWAN/App/lora_info.c
+    ${CMAKE_SOURCE_DIR}/LoRaWAN/App/lynkz_key_gen.c
     ${CMAKE_SOURCE_DIR}/LoRaWAN/Target/radio_board_if.c
     ${CMAKE_SOURCE_DIR}/Core/Src/main.c
     ${CMAKE_SOURCE_DIR}/Core/Src/gpio.c
@@ -78,6 +79,7 @@ set(STM32_Drivers_Src
     ${CMAKE_SOURCE_DIR}/Drivers/STM32WLxx_HAL_Driver/Src/stm32wlxx_hal_exti.c
     ${CMAKE_SOURCE_DIR}/Drivers/STM32WLxx_HAL_Driver/Src/stm32wlxx_hal_i2c.c
     ${CMAKE_SOURCE_DIR}/Drivers/STM32WLxx_HAL_Driver/Src/stm32wlxx_hal_i2c_ex.c
+    ${CMAKE_SOURCE_DIR}/Drivers/STM32WLxx_HAL_Driver/Src/stm32wlxx_hal_iwdg.c
     ${CMAKE_SOURCE_DIR}/Drivers/STM32WLxx_HAL_Driver/Src/stm32wlxx_hal_rtc.c
     ${CMAKE_SOURCE_DIR}/Drivers/STM32WLxx_HAL_Driver/Src/stm32wlxx_hal_rtc_ex.c
     ${CMAKE_SOURCE_DIR}/Drivers/STM32WLxx_HAL_Driver/Src/stm32wlxx_hal_subghz.c

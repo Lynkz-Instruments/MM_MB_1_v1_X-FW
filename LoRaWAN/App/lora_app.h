@@ -32,6 +32,7 @@ extern "C" {
 #include <stdint.h>
 #include "stm32wl_utils.h"
 #include "app_settings.h"
+#include "app_accel.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -126,11 +127,15 @@ extern "C" {
 #define LORAWAN_DEFAULT_CLASS_B_C_RESP_TIMEOUT      8000
 
 /* USER CODE BEGIN EC */
+// Device type according to the Lynkz device types.
+// See https://lynkz.atlassian.net/wiki/spaces/LYNKZ/pages/2057568284/Lynkz+Device+Types
+#define LYNKZ_DEVICE_TYPE                           (0x04) // MissMetal
+
 #define LORAWAN_USER_ERROR_PORT                     66
-#define LORAWAN_USER_RESET_REASON_PORT              67
 #define LORAWAN_USER_BEACON_PORT                    68
-#define LORAWAN_USER_HEART_BEAT_PORT                69
+#define LORAWAN_USER_STATUS_PORT                    69
 #define LORAWAN_USER_RF_TEST_PORT                   70
+#define LORAWAN_USER_CALIBRATION_PORT               73
 
 /* USER CODE END EC */
 
@@ -148,15 +153,77 @@ void LoRaWAN_DeInit(void);
 
 /* USER CODE BEGIN EFP */
 void SendTxData(void);
-void SendBeaconPayload(uint16_t *max_accel, int16_t *bma400_temperature);
-void SendHeartBeatPayload(AppMode_t mode, struct AppConfig_s config, uint16_t temperature);
-void SendResetReason(ResetReason reset_reason);
+void SendBeaconPayload(int16_t x, int16_t y, int16_t z);
+void SendCalibrationPayload(int16_t x_mg, int16_t y_mg, int16_t z_mg);
+void SendStatusPayload(AppMode_t mode, struct AppConfig_s config);
 void SendLoRaModTestPayload(void);
 void SendRfTestConfigPayload(void);
 void SendErrorCode(uint8_t error_code);
-void LoRaWAN_checkTxDone(void);
 void RadioSetDefaultConfig(void);
-void RadioTx(uint8_t *buffer, unsigned size);
+void LogSysTime(const char *label);
+
+/**
+  * @brief  Arm (or re-arm) the next wake at the wall-clock boundary aligned
+  *         to period_minutes, phase-shifted by offset_minutes past midnight
+  *         UTC (e.g. period=5/offset=0 wakes at :00/:05/:10/...; period=90/
+  *         offset=120 wakes at 02:00/03:30/05:00/...), then switches to a
+  *         plain recurring period after that first fire. Safe to call again
+  *         any time period_minutes or offset_minutes changes (e.g. via
+  *         downlink) - always fully re-aligns rather than just re-periods.
+  */
+void ScheduleAction(uint16_t period_minutes, uint16_t offset_minutes);
+
+/**
+  * @brief  Starts the IWDG safety net: arms hiwdg and the periodic checker
+  *         that conditionally feeds it based on recent evidence of a
+  *         completed cycle (see IwdgMarkProgress/OnIwdgCheckTimerEvent in
+  *         lora_app.c). Call once from main(), after MX_LoRaWAN_Init().
+  */
+void IwdgMonitor_Start(void);
+
+/**
+  * @brief  The periodic action itself: resync check, heartbeat (status
+  *         payload, OPERATION and STORAGE) or beacon send, downlink-driven
+  *         config re-check, RF test mode handling. Runs once at boot (called
+  *         directly) and thereafter on the schedule armed by ScheduleAction()
+  *         (invoked via the sequencer task).
+  */
+void RunScheduledAction(void);
+
+/**
+  * @brief  Runs when the BMA400 no-motion or activity interrupt wakes the
+  *         device from STOP2 (independent of the scheduled cadence above).
+  *         In APP_MODE_BEACON: activity and motion-stopped each send a beacon
+  *         ping (used to locate a fallen device) with no schedule change and
+  *         no rate limiting.
+  */
+void RunMotionStatusAction(void);
+
+/**
+  * @brief  Runs on a fixed short interval while in APP_MODE_CALIBRATION,
+  *         sending per-axis vibration (gravity/orientation removed, see
+  *         app_accel_measure_vibration_short_8mg) so wake_thresh and
+  *         no_motion_duration_s can be picked from observed real-world
+  *         values instead of guessed. Independent of the normal
+  *         no-motion/activity interrupts and the scheduled-action cadence -
+  *         armed/disarmed by CALIBRATION mode entry/exit alone. Each fire
+  *         blocks for ~0.5s (the vibration capture window), well inside
+  *         CALIBRATION_INTERVAL_MS.
+  */
+void RunCalibrationAction(void);
+
+/**
+  * @brief  Re-syncs every piece of mode-dependent device configuration
+  *         (GEN1/GEN2 interrupt arming, the calibration timer) to match the
+  *         given mode in one place, so a mode transition can never leave one
+  *         of them stale regardless of which code path detects it -
+  *         RefreshModeAndConfig calls this on every downlink-driven mode
+  *         change. Exposed (rather than static in lora_app.c) so main() can
+  *         also call it once for the initial sync at boot, which
+  *         RefreshModeAndConfig can't do since it only reacts to a *change*
+  *         of mode and a fresh boot never has one.
+  */
+void SyncModeConfiguration(AppMode_t mode);
 
 /* USER CODE END EFP */
 

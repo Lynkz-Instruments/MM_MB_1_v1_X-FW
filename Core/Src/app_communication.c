@@ -21,8 +21,8 @@
 // Common commands
 #define SET_CONFIG_COMMMAND           (0xA1)
 #define SET_DEVICE_MODE_COMMAND       (0xA2)
-#define CLEAR_FCNTUP_COMMAND          (0xA3)
 #define SET_RF_TEST_CONFIG_COMMAND    (0xA5)
+#define RESTART_COMMAND               (0xA6)
 
 #define OK_RESPONSE               (0xE0)
 #define DONE_RESPONSE             (0xE1)
@@ -34,8 +34,8 @@
 static void app_comm_process(uint8_t cmd, uint8_t const* data, uint16_t len);
 static void app_comm_set_config(uint8_t * command);
 static void app_comm_set_device_mode(uint8_t * command);
-static void app_comm_clear_fcntup(void);
 static void app_comm_set_rf_test_config(uint8_t * command);
+static void app_comm_restart(void);
 
 void app_comm_lora_process(uint8_t port, uint8_t * data, uint8_t len)
 {
@@ -78,11 +78,11 @@ static void app_comm_process(uint8_t cmd, uint8_t const* data, uint16_t len)
     case SET_DEVICE_MODE_COMMAND:
         app_comm_set_device_mode((uint8_t *)command);
         break;
-    case CLEAR_FCNTUP_COMMAND:
-        app_comm_clear_fcntup();
-        break;
     case SET_RF_TEST_CONFIG_COMMAND:
         app_comm_set_rf_test_config((uint8_t *)command);
+        break;
+    case RESTART_COMMAND:
+        app_comm_restart();
         break;
     default:
         break;
@@ -113,15 +113,6 @@ static void app_comm_set_device_mode(uint8_t * command)
   app_set_device_mode((AppMode_t)command[0]);
 }
 
-static void app_comm_clear_fcntup(void)
-{
-  #if APP_COMMUNICATION_VERBOSE >= 2
-  print("Clearing FCntUp.\r\n");
-  #endif
-
-  app_fcntup_clear();
-}
-
 static void app_comm_set_rf_test_config(uint8_t * command)
 {
   if (command == NULL) return;
@@ -133,4 +124,13 @@ static void app_comm_set_rf_test_config(uint8_t * command)
   struct AppRfTestConfig_s cfg;
   memcpy(&cfg, &command[0], sizeof(struct AppRfTestConfig_s));
   app_set_rf_test_config(cfg);
+}
+
+static void app_comm_restart(void)
+{
+  #if APP_COMMUNICATION_VERBOSE >= 2
+  print("Restart command received, resetting device.\r\n");
+  #endif
+
+  NVIC_SystemReset();
 }

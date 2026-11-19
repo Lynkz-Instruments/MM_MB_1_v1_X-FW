@@ -39,13 +39,13 @@ void MX_I2C1_Init(void)
 
   /* USER CODE END I2C1_Init 1 */
   hi2c1.Instance = I2C1;
-  // Internal pullups are ~30-50k (weak), so use slow speed for proper rise times
-  // if using source clock of 4MHz:
-  // 0x00100D14 = 114.29 kHz, measured 70kHz
-  // 0x10707DBC = 6.35 kHz, measured 6KHz
-  // 0x30A0A7FB = 2.381 kHz, 
-  // 0x90E1E4FE = 826.45 kHz
-  hi2c1.Init.Timing = 0x30A0A7FB;
+  // Internal pullups are ~30-50k (weak), so keep the bus in a conservative
+  // but practical range for this board. The old timing value was configured
+  // for a much slower 2.381 kHz bus, which makes every accelerometer read
+  // drag out and stretches the 500-sample capture well beyond the intended 5s.
+  // For a 4 MHz source clock, 0x00100D14 yields ~114.29 kHz nominal and has
+  // been observed to work reliably here.
+  hi2c1.Init.Timing = 0x00100D14;
   hi2c1.Init.OwnAddress1 = 0;
   hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -153,5 +153,10 @@ void HAL_I2C_MspDeInit(I2C_HandleTypeDef* i2cHandle)
 }
 
 /* USER CODE BEGIN 1 */
+
+void i2c_Resume(void)
+{
+    MX_I2C1_Init();
+}
 
 /* USER CODE END 1 */

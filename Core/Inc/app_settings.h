@@ -1,6 +1,6 @@
 /**
  * @file    app_settings.h
- * @brief   Device mode and configuration management for the MissMetal sensor node.
+ * @brief   Device mode and configuration management for the OreTag sensor node.
  *
  * Owns the AppMode_t and AppConfig_s types and the validated get/set API that
  * backs them with EEPROM persistence.  All callers should go through this API
@@ -18,16 +18,20 @@
 typedef enum {
     APP_MODE_STORAGE = 0,
     APP_MODE_OPERATION,
-    APP_MODE_BEACON,
     APP_MODE_RF_TEST,
+    APP_MODE_BEACON,
+    APP_MODE_CALIBRATION,
     APP_MODE_MAX
 } AppMode_t;
 
-/* Packed so the 3-byte EEPROM layout matches the struct exactly. */
+/* Packed so the 9-byte EEPROM layout matches the struct exactly. */
 #pragma pack(1)
 struct AppConfig_s {
-    uint8_t  wake_thresh;         /* BMA400 wake threshold (1 LSB = 8 mg) */
-    uint16_t sleep_time_minutes;  /* RTC wakeup period */
+    uint8_t  wake_thresh;             /* BMA400 motion threshold, both directions (1 LSB = 8 mg) */
+    uint16_t no_motion_duration_s;    /* Required no-motion duration before waking, seconds */
+    uint16_t sleep_time_minutes;      /* Scheduled action period while active */
+    uint16_t idle_sleep_time_minutes; /* Scheduled action period while idle (no-motion confirmed) */
+    uint16_t schedule_offset_minutes; /* Wall-clock alignment offset, minutes past midnight UTC */
 };
 #pragma pack()
 
@@ -35,13 +39,31 @@ struct AppConfig_s {
 #define WAKE_THRESHOLD_MAX      (100)
 #define WAKE_THRESHOLD_DEFAULT  (10)
 
+/* gen_int_dur runs at BMA400 FILT1's rate, tied to the accel's own configured
+ * ODR (25Hz, see app_accel_init) - giving a 65535-sample (~655s) hardware
+ * ceiling at that rate, capped well under that here. */
+#define NO_MOTION_DURATION_MIN_S     (1)
+#define NO_MOTION_DURATION_MAX_S     (600)
+#define NO_MOTION_DURATION_DEFAULT_S (5)
+
 #define SLEEP_TIME_MIN          (1)
-#define SLEEP_TIME_MAX          (1440)
+#define SLEEP_TIME_MAX          (10080) /* 7 days */
 #define SLEEP_TIME_DEFAULT      (5)
+
+#define IDLE_SLEEP_TIME_MIN_MINUTES     (1)
+#define IDLE_SLEEP_TIME_MAX_MINUTES     (10080) /* 7 days */
+#define IDLE_SLEEP_TIME_DEFAULT_MINUTES (60)
+
+/* Wall-clock alignment offset for the scheduled action, in minutes past
+ * midnight UTC. E.g. sleep_time_minutes=90 with offset=120 wakes at
+ * 02:00/03:30/05:00/... instead of the default 00:00/01:30/03:00/... */
+#define SCHEDULE_OFFSET_MIN_MINUTES     (0)
+#define SCHEDULE_OFFSET_MAX_MINUTES     (1439) /* just under 24h */
+#define SCHEDULE_OFFSET_DEFAULT_MINUTES (0)
 
 /* RF test configuration — persisted independently of AppConfig_s.
  * Packed to 11 bytes; maps directly onto ModParameter_t fields used by
- * RadioSetDefaultConfig().  Stored at EEPROM 0x09–0x13. */
+ * RadioSetDefaultConfig().  Stored at EEPROM 0x0B–0x15 (see app_eeprom.c). */
 #pragma pack(1)
 struct AppRfTestConfig_s {
     uint32_t frequency_hz;  /* carrier frequency in Hz */
@@ -86,8 +108,17 @@ bool app_config_changed(struct AppConfig_s prev, struct AppConfig_s current);
 bool app_rf_test_config_changed(struct AppRfTestConfig_s prev, struct AppRfTestConfig_s current);
 
 /**
- * @brief  Write a validated mode to EEPROM. No-op if mode is out of range or
- *         STORAGE (not yet implemented).
+ * @brief  One-time EEPROM conversion from the old MissMetal layout (3-byte
+ *         config, BEACON=2/RF_TEST=3). If the provisioned flag isn't set:
+ *         translates the stored mode to the current numbering, erases the
+ *         config and RF test config to 0xFF (same as a blank EEPROM, so the
+ *         getters fall back to defaults) and stamps the flag. Call once after
+ *         app_eeprom_init(), before reading mode or config.
+ */
+void app_settings_init(void);
+
+/**
+ * @brief  Write a validated mode to EEPROM. No-op if mode is out of range.
  */
 void app_set_device_mode(AppMode_t mode);
 
@@ -122,30 +153,19 @@ void app_set_rf_test_config(struct AppRfTestConfig_s config);
 struct AppRfTestConfig_s app_get_rf_test_config(void);
 
 /* --------------------------------------------------------------------------
- * Frame counter
+ * DeviceTimeReq/DeviceTimeAns resync
  * -------------------------------------------------------------------------- */
 
 /**
- * @brief  Load FCntUp from EEPROM.  Must be called once after app_eeprom_init().
- *         On a blank EEPROM (first boot), resets the counter to 0 and stamps
- *         the provisioned flag so subsequent boots load normally.
+ * @brief  Persist the Unix timestamp (seconds) of the last successful
+ *         DeviceTimeAns sync to EEPROM.
  */
-void app_fcntup_init(void);
+void app_set_last_device_time_sync(uint32_t epoch_seconds);
 
 /**
- * @brief  Clear FCntUp to 0 and persist to EEPROM.  Use with caution, as this
- *         will cause LoRaWAN uplink frame counter desynchronization.
+ * @brief  Read the Unix timestamp of the last successful DeviceTimeAns sync.
+ * @return Stored timestamp, or 0 if the device has never synced.
  */
-void app_fcntup_clear(void);
-
-/**
- * @brief  Increment FCntUp and persist the new value to EEPROM.
- */
-void app_fcntup_increment_and_save(void);
-
-/**
- * @brief  Return the current FCntUp value.
- */
-uint32_t app_get_fcntup(void);
+uint32_t app_get_last_device_time_sync(void);
 
 #endif /* APP_SETTINGS_H */

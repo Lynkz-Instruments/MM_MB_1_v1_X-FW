@@ -79,10 +79,13 @@ typedef enum
   CFG_SEQ_Task_LoRaStoreContextEvent,
   CFG_SEQ_Task_LoRaStopJoinEvent,
   /* USER CODE BEGIN CFG_SEQ_Task_Id_t */
-
+  CFG_SEQ_Task_ScheduledAction,
+  CFG_SEQ_Task_MotionStatusAction,
+  CFG_SEQ_Task_CalibrationAction,
   /* USER CODE END CFG_SEQ_Task_Id_t */
   CFG_SEQ_Task_NBR
 } CFG_SEQ_Task_Id_t;
+
 
 /**
   * This is a bit mapping over 32bits listing all events id supported in the application
@@ -96,9 +99,6 @@ typedef enum
   CFG_SEQ_Evt_NBR
 } CFG_SEQ_IdleEvt_Id_t;
 
-/* USER CODE BEGIN ET */
-
-/* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */

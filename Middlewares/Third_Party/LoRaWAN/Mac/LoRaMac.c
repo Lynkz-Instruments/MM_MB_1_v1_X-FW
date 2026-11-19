@@ -3960,7 +3960,6 @@ static LoRaMacStatus_t PrepareFrame( LoRaMacHeader_t* macHdr, LoRaMacFrameCtrl_t
     MacCtx.PktBufferLen = 0;
     MacCtx.NodeAckRequested = false;
     uint32_t fCntUp = 0;
-    fCntUp = app_get_fcntup();
     size_t macCmdsSize = 0;
     uint8_t availableSize = 0;
 

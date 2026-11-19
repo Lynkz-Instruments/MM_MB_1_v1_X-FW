@@ -97,6 +97,9 @@ void SystemApp_Init(void)
   UTIL_LPM_SetStopMode((1 << CFG_LPM_APPLI_Id), UTIL_LPM_DISABLE);
 #elif !defined (LOW_POWER_DISABLE)
 #error LOW_POWER_DISABLE not defined
+#else
+  /* Allow Stop2 mode between scheduled wakes; see UTIL_SEQ_Idle() below. */
+  UTIL_LPM_SetStopMode((1 << CFG_LPM_APPLI_Id), UTIL_LPM_ENABLE);
 #endif /* LOW_POWER_DISABLE */
 
   /* USER CODE BEGIN SystemApp_Init_2 */
@@ -110,7 +113,7 @@ void UTIL_SEQ_Idle(void)
 {
   /* USER CODE BEGIN UTIL_SEQ_Idle_1 */
   /* USER CODE END UTIL_SEQ_Idle_1 */
-//   UTIL_LPM_EnterLowPower();
+  UTIL_LPM_EnterLowPower();
   /* USER CODE BEGIN UTIL_SEQ_Idle_2 */
   /* USER CODE END UTIL_SEQ_Idle_2 */
 }

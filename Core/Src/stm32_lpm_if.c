@@ -6,6 +6,8 @@
 #include "stm32_lpm.h"
 #include "stm32_lpm_if.h"
 #include "usart_if.h"
+#include "usart.h"
+#include "i2c.h"
 
 /* USER CODE BEGIN Includes */
 /* USER CODE END Includes */
@@ -72,6 +74,11 @@ void PWR_EnterStopMode(void)
   LL_PWR_ClearFlag_C1STOP_C1STB();
 
   /* USER CODE BEGIN EnterStopMode_2 */
+  /* Release not-retained USARTx/DMA and I2Cx (EEPROM + BMA400 share I2C1) -
+   * otherwise their GPIO stay parked in AF mode for the whole STOP2 idle
+   * window instead of just during actual transfers. */
+  HAL_UART_DeInit(&huart2);
+  HAL_I2C_DeInit(&hi2c1);
   /* USER CODE END EnterStopMode_2 */
   HAL_PWREx_EnterSTOP2Mode(PWR_STOPENTRY_WFI);
   /* USER CODE BEGIN EnterStopMode_3 */
@@ -92,6 +99,8 @@ void PWR_ExitStopMode(void)
   /* Resume not retained USARTx and DMA */
   vcom_Resume();
   /* USER CODE BEGIN ExitStopMode_2 */
+  /* Resume not retained I2Cx (EEPROM + BMA400 share I2C1) */
+  i2c_Resume();
   /* USER CODE END ExitStopMode_2 */
 }
 

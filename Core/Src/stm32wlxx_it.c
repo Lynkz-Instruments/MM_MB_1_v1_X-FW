@@ -20,6 +20,9 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32wlxx_hal.h"
 #include "stm32wlxx_it.h"
+#include "gpio.h"
+#include "stm32_seq.h"
+#include "utilities_def.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -87,14 +90,12 @@ void NMI_Handler(void)
   */
 void HardFault_Handler(void)
 {
-  /* USER CODE BEGIN HardFault_IRQn 0 */
-
-  /* USER CODE END HardFault_IRQn 0 */
-  while (1)
-  {
-    /* USER CODE BEGIN W1_HardFault_IRQn 0 */
-    /* USER CODE END W1_HardFault_IRQn 0 */
-  }
+  volatile uint32_t hfsr  = SCB->HFSR;   // HardFault Status Register
+  volatile uint32_t cfsr  = SCB->CFSR;   // Configurable Fault Status (MMFSR+BFSR+UFSR)
+  volatile uint32_t mmfar = SCB->MMFAR;  // MemManage fault address (valid if CFSR bit 7 set)
+  volatile uint32_t bfar  = SCB->BFAR;   // BusFault address (valid if CFSR bit 15 set)
+  (void)hfsr; (void)cfsr; (void)mmfar; (void)bfar;
+  while(1);
 }
 
 /**
@@ -273,5 +274,24 @@ void SUBGHZ_Radio_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
+
+/**
+  * @brief This function handles the BMA400 INT1 (motion/no-motion) line, PA0.
+  */
+void EXTI0_IRQHandler(void)
+{
+  HAL_GPIO_EXTI_IRQHandler(BMA400_INT_PIN);
+}
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+  // GEN1 (no-motion) and GEN2 (activity) share INT1 and one clear-on-read
+  // status register, so both go through the single combined status read in
+  // RunMotionStatusAction - see app_accel_get_motion_status().
+  if (GPIO_Pin == BMA400_INT_PIN)
+  {
+    UTIL_SEQ_SetTask((1 << CFG_SEQ_Task_MotionStatusAction), CFG_SEQ_Prio_0);
+  }
+}
 
 /* USER CODE END 1 */

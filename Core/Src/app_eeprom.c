@@ -1,6 +1,6 @@
 /**
  * @file    app_eeprom.c
- * @brief   Application-level EEPROM interface for the MissMetal sensor node.
+ * @brief   Application-level EEPROM interface for the OreTag sensor node.
  *
  * This is the single translation unit that couples the platform-agnostic
  * CAT24C32 driver to the STM32 HAL.  The three static callbacks below
@@ -18,13 +18,16 @@
 #include "app_errors.h"
 #include "utils.h"
 
-#define EEPROM_PROVISIONED_FLAG_ADDR            0x00                            // 1 byte — 0xA5 after first boot
-#define EEPROM_FCNTUP_ADDR                      0x01                            // 4 bytes
+#define EEPROM_PROVISIONED_FLAG_ADDR            0x00                            // 1 byte — EEPROM_PROVISIONED_MAGIC once on this layout
 #define EEPROM_DEVICE_MODE_ADDR                 0x05                            // 1 byte
-#define EEPROM_DEVICE_CONFIG_ADDR               0x06                            // 3 bytes
-#define EEPROM_RF_TEST_CONFIG_ADDR              0x09                            // 4 bytes
+#define EEPROM_DEVICE_CONFIG_ADDR               0x06                            // 9 bytes (0x06-0x0E)
+#define EEPROM_RF_TEST_CONFIG_ADDR              0x0F                            // 11 bytes (0x0F-0x19)
+#define EEPROM_LAST_DEVICE_TIME_SYNC_ADDR        0x1A                            // 4 bytes
 
-#define EEPROM_PROVISIONED_MAGIC                0xA5
+/* 0xA6, not 0xA5: the old MissMetal firmware stamped 0xA5 here on its own
+ * 3-byte-config layout, so a different value is what tells the two apart
+ * (see app_settings_init). */
+#define EEPROM_PROVISIONED_MAGIC                0xA6
 
 /* --------------------------------------------------------------------------
  * HAL I/O callbacks — injected into the driver via CAT24C32_IO_t
@@ -66,11 +69,6 @@ int8_t app_eeprom_init(void)
         s_initialized = true;
     }
     return rslt;
-}
-
-bool app_eeprom_is_initialized(void)
-{
-    return s_initialized;
 }
 
 /* --------------------------------------------------------------------------
@@ -116,7 +114,7 @@ uint8_t app_eeprom_read_mode(void)
     if (rslt != CAT24C32_OK) {
         printf("EEPROM Read Error (Device Mode)!\r\n");
         Error_Handler(ERROR_EEPROM_READ);
-        return APP_MODE_BEACON;
+        return APP_MODE_OPERATION;
     }
     return mode;
 }
@@ -155,34 +153,6 @@ struct AppConfig_s app_eeprom_read_config(void)
 }
 
 /* --------------------------------------------------------------------------
- * Frame counter
- * FCntUp is written one byte at a time to avoid crossing a page boundary,
- * since EEPROM_FCNTUP_ADDR (0x01) is not page-aligned for a 4-byte write.
- * -------------------------------------------------------------------------- */
-
-void app_eeprom_write_fcntup(uint32_t fcntup)
-{
-    if (!s_initialized) return;
-    for (size_t i = 0; i < sizeof(fcntup); i++) {
-        uint8_t buf = (fcntup >> (8 * i)) & 0xFF;
-        CAT24C32_Write(EEPROM_FCNTUP_ADDR + i, &buf, 1);
-    }
-}
-
-uint32_t app_eeprom_read_fcntup(void)
-{
-    uint32_t fcntup = 0;
-    if (!s_initialized) return fcntup;
-    for (size_t i = 0; i < sizeof(fcntup); i++) {
-        uint8_t buf = 0;
-        if (CAT24C32_Read(EEPROM_FCNTUP_ADDR + i, &buf, 1) == CAT24C32_OK) {
-            fcntup |= ((uint32_t)buf << (8 * i));
-        }
-    }
-    return fcntup;
-}
-
-/* --------------------------------------------------------------------------
  * RF test configuration
  * -------------------------------------------------------------------------- */
 
@@ -207,3 +177,30 @@ struct AppRfTestConfig_s app_eeprom_read_rf_test_config(void)
     }
     return config;
 }
+
+/* --------------------------------------------------------------------------
+ * DeviceTimeReq/DeviceTimeAns resync
+ * -------------------------------------------------------------------------- */
+
+void app_eeprom_write_last_device_time_sync(uint32_t epoch_seconds)
+{
+    if (!s_initialized) return;
+    int8_t rslt = CAT24C32_Write(EEPROM_LAST_DEVICE_TIME_SYNC_ADDR, (uint8_t *)&epoch_seconds, sizeof(epoch_seconds));
+    if (rslt != CAT24C32_OK) {
+        printf("EEPROM Write Error (Last Device Time Sync)!\r\n");
+        Error_Handler(ERROR_EEPROM_WRITE);
+    }
+}
+
+uint32_t app_eeprom_read_last_device_time_sync(void)
+{
+    uint32_t epoch_seconds = 0;
+    if (!s_initialized) return epoch_seconds;
+    int8_t rslt = CAT24C32_Read(EEPROM_LAST_DEVICE_TIME_SYNC_ADDR, (uint8_t *)&epoch_seconds, sizeof(epoch_seconds));
+    if (rslt != CAT24C32_OK) {
+        printf("EEPROM Read Error (Last Device Time Sync)!\r\n");
+        Error_Handler(ERROR_EEPROM_READ);
+    }
+    return epoch_seconds;
+}
+

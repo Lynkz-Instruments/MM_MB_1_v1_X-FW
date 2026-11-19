@@ -1067,8 +1067,8 @@ uint8_t SetSelectedChannels(void) {
     ChanMaskSetParams_t chanMaskSet;
     uint16_t myChannelsMask[6] = {0}; // Initialize all channels disabled
 
-    // Enable channel 64
-    myChannelsMask[0] = 0x0000;
+    // Enable sub-band 1: channels 0-7 (125kHz) plus channel 64 (500kHz)
+    myChannelsMask[0] = 0x00FF;
     myChannelsMask[1] = 0x0000;
     myChannelsMask[2] = 0x0000;
     myChannelsMask[3] = 0x0000;

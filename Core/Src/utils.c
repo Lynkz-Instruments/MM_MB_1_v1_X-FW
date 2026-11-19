@@ -4,6 +4,9 @@ Utils from Charles Marseille, Lynkz Instruments, 2026
 -----------
 */
 #include "utils.h"
+#include "gpio.h"
+#include "i2c.h"
+#include "usart.h"
 
 extern RTC_HandleTypeDef hrtc;
 
@@ -13,9 +16,12 @@ void SystemClock_Config(void)
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
   /** Configure LSE Drive Capability
+  * High drive capability (LSEDRV[1:0] = 11) per ST guidance, given the
+  * on-board SubGHz radio's RF activity is a plausible noise source for a
+  * low-drive 32.768kHz oscillator sharing the same board.
   */
   HAL_PWR_EnableBkUpAccess();
-  __HAL_RCC_LSEDRIVE_CONFIG(RCC_LSEDRIVE_LOW);
+  __HAL_RCC_LSEDRIVE_CONFIG(RCC_LSEDRIVE_HIGH);
 
   /** Configure the main internal regulator output voltage
   */
@@ -51,33 +57,26 @@ void SystemClock_Config(void)
   }
 }
 
-void EnterShutdownWithBMA(struct AppConfig_s config)
+void EnterShutdown(struct AppConfig_s config)
 {
     LoRaWAN_DeInit();
-    app_accel_prepare_beacon_shutdown(config.wake_thresh);
-    HAL_NVIC_EnableIRQ(EXTI0_IRQn);
-    HAL_PWR_EnableWakeUpPin(PWR_WAKEUP_PIN1_HIGH);
+    app_accel_enter_low_power();
+    HAL_I2C_DeInit(&hi2c1);
+    HAL_NVIC_EnableIRQ(BMA400_INT_EXTI_IRQn);
     HAL_RTCEx_DeactivateWakeUpTimer(&hrtc);
-    print("Entering shutdown mode (With BMA).\r\n");
-    __HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_0);
+    print("Entering shutdown mode.\r\n");
+    HAL_UART_DeInit(&huart2);
+    __HAL_GPIO_EXTI_CLEAR_IT(BMA400_INT_PIN);
     __HAL_PWR_CLEAR_FLAG(PWR_FLAG_WU);
     HAL_RTCEx_SetWakeUpTimer_IT(&hrtc, (config.sleep_time_minutes * 60), RTC_WAKEUPCLOCK_CK_SPRE_16BITS, 0);
 
-    HAL_SuspendTick();
-    HAL_PWREx_EnterSHUTDOWNMode();
-}
+    gpio_release_led(); // Analog mode lets R14 hold LED B low through VDD12 ramp-down
 
-void EnterShutdownNoBMA(struct AppConfig_s config)
-{
-    LoRaWAN_DeInit();
-    app_accel_prepare_operation_shutdown();
-    HAL_NVIC_EnableIRQ(EXTI0_IRQn);
-    HAL_PWR_EnableWakeUpPin(PWR_WAKEUP_PIN1_HIGH);
-    HAL_RTCEx_DeactivateWakeUpTimer(&hrtc);
-    print("Entering shutdown mode (No BMA).\r\n");
-    __HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_0);
-    __HAL_PWR_CLEAR_FLAG(PWR_FLAG_WU);
-    HAL_RTCEx_SetWakeUpTimer_IT(&hrtc, (config.sleep_time_minutes * 60), RTC_WAKEUPCLOCK_CK_SPRE_16BITS, 0);
+    /* STM32WL5M is a dual-core WL55: the system only enters the lowest mode
+     * BOTH CPUs allow. HAL_PWREx_EnterSHUTDOWNMode() sets CPU1's LPMS only;
+     * CPU2 (never booted) stays at its reset LPMS, so the system stopped in a
+     * lighter mode with LSI running - and the IWDG then reset it. */
+    MODIFY_REG(PWR->C2CR1, PWR_C2CR1_LPMS, PWR_LOWPOWERMODE_SHUTDOWN);
 
     HAL_SuspendTick();
     HAL_PWREx_EnterSHUTDOWNMode();

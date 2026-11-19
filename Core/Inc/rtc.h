@@ -33,6 +33,28 @@ extern "C" {
 
 extern RTC_HandleTypeDef hrtc;
 
+/* Backup-domain state captured at MX_RTC_Init(), before UART is up. See
+ * LoRaWAN_Init()'s startup log for a printed dump of these once UART is ready. */
+extern uint32_t g_rtc_bkup_dr0;
+extern uint32_t g_rtc_bkup_dr1;
+extern uint32_t g_rtc_inits;
+extern uint8_t g_rtc_wut_restored;
+
+/* Raw RCC->BDCR captured as the very first instruction of main(), before any
+ * init code runs. Brackets whether RCC_BDCR_RTCSEL already reads wrong at the
+ * earliest possible moment (backup domain lost during shutdown/wake itself)
+ * or only after MX_RTC_Init() runs (a software-triggered reset via the RTC
+ * clock-source mismatch path in HAL_RCCEx_PeriphCLKConfig()). */
+extern uint32_t g_boot_bdcr;
+
+/* RCC->BDCR captured at the end of MX_RTC_Init(), after HAL_RTC_MspInit()'s
+ * LSE selection/readiness checks have already passed (that function calls
+ * Error_Handler() itself if LSE isn't ready or isn't selected as the RTC
+ * clock source, so reaching this point already implies success) - printed
+ * alongside g_boot_bdcr in LoRaWAN_Init() as a live, post-init confirmation
+ * rather than just the pre-init snapshot. */
+extern uint32_t g_rtc_bdcr_after_init;
+
 void MX_RTC_Init(void);
 
 #ifdef __cplusplus

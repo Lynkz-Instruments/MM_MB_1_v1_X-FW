@@ -65,9 +65,6 @@ typedef struct
 
 int32_t radio_tone(void);
 int32_t radio_stop(void);
-int32_t radio_tx(uint8_t * buffer, unsigned size);
-
-int32_t radio_rx(int32_t rx_timeout_ms);
 
 /**
   * @brief RF Set Radio Configuration test command

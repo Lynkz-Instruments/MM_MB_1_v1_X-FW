@@ -50,7 +50,11 @@ void MX_USART2_UART_Init(void)
   huart2.Init.OverSampling = UART_OVERSAMPLING_16;
   huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
   huart2.Init.ClockPrescaler = UART_PRESCALER_DIV1;
-  huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  // TX/RX are only wired backwards on the test board (TB_DETECT_PIN pulled
+  // low) - swap them in that case only, otherwise leave as normal.
+  huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_SWAP_INIT;
+  huart2.AdvancedInit.Swap = gpio_is_test_board() ? UART_ADVFEATURE_SWAP_ENABLE : UART_ADVFEATURE_SWAP_DISABLE;
+  gpio_release_test_board_detect(); // one-shot read, done with it now
   if (HAL_UART_Init(&huart2) != HAL_OK)
   {
     Error_Handler(ERROR_UART_INIT);

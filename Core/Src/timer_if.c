@@ -174,8 +174,17 @@ UTIL_TIMER_Status_t TIMER_IF_Init(void)
 
     /*Enable Direct Read of the calendar registers (not through Shadow) */
     HAL_RTCEx_EnableBypassShadow(&hrtc);
-    /*Initialize MSB ticks*/
-    TIMER_IF_BkUp_Write_MSBticks(0);
+
+    /* Only clear MSBticks on a true cold start. RTC_ICSR_INITS is cleared
+     * only by a backup-domain reset (VBAT loss); on a warm reboot where the
+     * backup domain survived (e.g. waking from SHUTDOWN), it stays set, and
+     * MSBticks must be preserved or every reboot would silently discard
+     * however many ~44-day counter wraps had accumulated, corrupting the
+     * SysTime calendar reference this drives. */
+    if (READ_BIT(RTC->ICSR, RTC_ICSR_INITS) == 0U)
+    {
+      TIMER_IF_BkUp_Write_MSBticks(0);
+    }
 
     TIMER_IF_SetTimerContext();
 

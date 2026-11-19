@@ -1,6 +1,6 @@
 /**
  * @file    app_eeprom.h
- * @brief   Application-level EEPROM interface for the MissMetal sensor node.
+ * @brief   Application-level EEPROM interface for the OreTag sensor node.
  *
  * Wraps the platform-agnostic CAT24C32 driver with STM32 HAL I/O and exposes
  * typed read/write helpers for each logical field stored in the EEPROM.
@@ -25,12 +25,6 @@
 int8_t app_eeprom_init(void);
 
 /**
- * @brief  Check whether app_eeprom_init() completed successfully.
- * @return true if initialized, false otherwise.
- */
-bool app_eeprom_is_initialized(void);
-
-/**
  * @brief  Persist the device operating mode (AppMode_t) to EEPROM.
  * @param  mode  Raw mode byte; caller is responsible for range validation.
  */
@@ -38,13 +32,13 @@ void app_eeprom_write_mode(uint8_t mode);
 
 /**
  * @brief  Read the device operating mode from EEPROM.
- * @return Stored mode byte, or APP_MODE_BEACON if the read fails.
+ * @return Stored mode byte, or APP_MODE_OPERATION if the read fails.
  */
 uint8_t app_eeprom_read_mode(void);
 
 /**
  * @brief  Persist the application configuration struct to EEPROM.
- * @param  config  Configuration to store (packed, 3 bytes).
+ * @param  config  Configuration to store (packed, 9 bytes).
  */
 void app_eeprom_write_config(struct AppConfig_s config);
 
@@ -53,18 +47,6 @@ void app_eeprom_write_config(struct AppConfig_s config);
  * @return Stored configuration, or zero-initialised struct if the read fails.
  */
 struct AppConfig_s app_eeprom_read_config(void);
-
-/**
- * @brief  Persist the LoRaWAN uplink frame counter to EEPROM (little-endian).
- * @param  fcntup  Current FCntUp value.
- */
-void app_eeprom_write_fcntup(uint32_t fcntup);
-
-/**
- * @brief  Read the LoRaWAN uplink frame counter from EEPROM.
- * @return Stored FCntUp value, or 0 for any byte whose read fails.
- */
-uint32_t app_eeprom_read_fcntup(void);
 
 /**
  * @brief  Return true if the provisioned flag byte equals the magic value.
@@ -80,7 +62,7 @@ void app_eeprom_set_provisioned(void);
 
 /**
  * @brief  Persist the RF test configuration struct to EEPROM.
- * @param  config  RF test configuration to store (packed, 4 bytes).
+ * @param  config  RF test configuration to store (packed, 11 bytes).
  */
 void app_eeprom_write_rf_test_config(struct AppRfTestConfig_s config);
 
@@ -89,5 +71,17 @@ void app_eeprom_write_rf_test_config(struct AppRfTestConfig_s config);
  * @return Stored configuration, or zero-initialised struct if the read fails.
  */
 struct AppRfTestConfig_s app_eeprom_read_rf_test_config(void);
+
+/**
+ * @brief  Persist the Unix timestamp of the last successful DeviceTimeAns
+ *         sync to EEPROM.
+ */
+void app_eeprom_write_last_device_time_sync(uint32_t epoch_seconds);
+
+/**
+ * @brief  Read the Unix timestamp of the last successful DeviceTimeAns sync.
+ * @return Stored timestamp, or 0 if the read fails.
+ */
+uint32_t app_eeprom_read_last_device_time_sync(void);
 
 #endif // APP_EEPROM_H

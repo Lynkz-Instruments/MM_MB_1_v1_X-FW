@@ -15,8 +15,6 @@
 #define TOSTRING(x)  STRINGIFY(x)
 
 void SystemClock_Config(void);
-void EnterShutdownWithWakeUpPinEn(void);
-void EnterShutdownWithBMA(struct AppConfig_s config);
-void EnterShutdownNoBMA(struct AppConfig_s config);
+void EnterShutdown(struct AppConfig_s config);
 void print(const char *fmt, ...);
 void LM_Delay(uint32_t delay_ms, uint32_t start_time_ms);

@@ -1064,6 +1064,8 @@ static void McpsIndication( McpsIndication_t *mcpsIndication, LoRaMacRxStatus_t 
 
     if( RxParams.Status != LORAMAC_EVENT_INFO_STATUS_OK )
     {
+        MW_LOG( TS_ON, VLEVEL_ALWAYS, "D/L rejected: status=%d fcntdown=%u slot=%d\r\n",
+                ( int )RxParams.Status, ( unsigned int )mcpsIndication->DownLinkCounter, ( int )rxStatus->RxSlot );
         return;
     }
 

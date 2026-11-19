@@ -29,8 +29,6 @@
 #include "utils.h"
 #include "stm32_systime.h"
 
-#define RF_TEST_TONE_DURATION_MS     20000 /* how long the test tone stays on before the config uplink */
-
 int main(void)
 {
     HAL_Init();
@@ -41,6 +39,13 @@ int main(void)
     MX_LoRaWAN_Init();                      //calls MX_RTC_Init()
     MX_USART2_UART_Init();
 
+    // Needs the RTC/UTIL_TIMER already initialised (above) - starts hiwdg's
+    // hardware countdown immediately, so keep this right after them and
+    // before anything else below that could legitimately take a while
+    // (BMA400 init, LoRaWAN join); IWDG_PROGRESS_BOOT_MARGIN_MINUTES in
+    // lora_app.c covers that gap.
+    IwdgMonitor_Start();
+
     int rslt = 0;
     uint32_t reset_flags = RCC->CSR;
     ResetReason reset_reason = RESET_REASON_NONE;
@@ -50,36 +55,45 @@ int main(void)
     RCC->CSR |= RCC_CSR_RMVF; // Clear reset flags after reading
 
     printf("MissMetal %s Started!\r\n", TOSTRING(FW_VERSION_MAJOR) "." TOSTRING(FW_VERSION_MINOR) "." TOSTRING(FW_VERSION_BUGFIX));
-    blink_led(2, 50);
+    printf("Reset reason: %s (RCC_CSR=0x%08lX)\r\n",
+        reset_reason == RESET_REASON_LPWR   ? "LPWR"   :
+        reset_reason == RESET_REASON_WWDG   ? "WWDG"   :
+        reset_reason == RESET_REASON_IWDG   ? "IWDG"   :
+        reset_reason == RESET_REASON_SFTRST ? "SFTRST" :
+        reset_reason == RESET_REASON_BOR    ? "BOR (power-on / SHUTDOWN wake)" :
+        reset_reason == RESET_REASON_PIN    ? "PIN"    : "NONE",
+        (unsigned long)reset_flags);
+    gpio_blink_led(2, 50);
 
     rslt = app_eeprom_init();
     if (rslt != 0) {
         Error_Handler(ERROR_EEPROM_INIT);
     } else {
         printf("EEPROM initialized successfully.\r\n");
-        app_fcntup_init();
+        app_settings_init();
     }
 
     AppMode_t current_mode = app_get_device_mode();
     printf("Current device mode: %s\r\n",
-        current_mode == APP_MODE_STORAGE   ? "STORAGE"   :
-        current_mode == APP_MODE_OPERATION ? "OPERATION" :
-        current_mode == APP_MODE_BEACON    ? "BEACON"    :
-        current_mode == APP_MODE_RF_TEST   ? "RF_TEST"   : "UNKNOWN");
+        current_mode == APP_MODE_STORAGE     ? "STORAGE"     :
+        current_mode == APP_MODE_OPERATION   ? "OPERATION"   :
+        current_mode == APP_MODE_RF_TEST     ? "RF_TEST"     :
+        current_mode == APP_MODE_BEACON      ? "BEACON"      :
+        current_mode == APP_MODE_CALIBRATION ? "CALIBRATION" : "UNKNOWN");
 
     struct AppConfig_s current_config = app_get_device_config();
     printf("Current device config:\r\n");
     printf("Accel. Threshold (%d * 8mg) = %d mg\r\n", current_config.wake_thresh, current_config.wake_thresh * 8);
+    printf("No-motion duration: %d s\r\n", current_config.no_motion_duration_s);
     printf("Sleep time: %d min\r\n", current_config.sleep_time_minutes);
-    
-    uint16_t int_status;
-    rslt = app_accel_init(&hi2c1, &int_status);
+    printf("Idle sleep time: %d min\r\n", current_config.idle_sleep_time_minutes);
+
+    rslt = app_accel_init(&hi2c1);
     if (rslt != 0) {
         printf("Error initializing BMA400: %d\r\n", rslt);
         Error_Handler(ERROR_BMA_INIT);
     }
     printf("BMA400 initialized successfully.\r\n");
-    printf("BMA400 wake flag: %d\r\n", int_status);
 
     rslt = app_accel_get_temperature(&temperature);
     if (rslt != 0) {
@@ -88,80 +102,37 @@ int main(void)
     }
     printf("Temperature: %d dC\r\n", temperature);
 
-    // Sending heartbeat payload.
-    struct AppRfTestConfig_s prev_rf_config = app_get_rf_test_config();
-    if (current_mode == APP_MODE_OPERATION || current_mode == APP_MODE_BEACON) {
-        printf("Sending heart beat payload\r\n");
-        SendHeartBeatPayload(current_mode, current_config, temperature);
-        LM_Delay(500, 0);
+    rslt = app_accel_configure_no_motion_interrupt(current_config.wake_thresh, current_config.no_motion_duration_s);
+    if (rslt != 0) {
+        printf("Error configuring no-motion interrupt: %d\r\n", rslt);
     }
 
-    // if (CoreDebug->DHCSR & CoreDebug_DHCSR_C_DEBUGEN_Msk) {
-    //     print("Debugger attached: skipping SHUTDOWN.\r\n");
-    //     while (1) { __NOP(); }
-    // }
-
-    // Store previous mode and config.
-    AppMode_t prev_mode = current_mode;
-    struct AppConfig_s prev_config = current_config;
-    // Re-read mode and config in case a downlink changed them.
-    current_mode = app_get_device_mode();
-    current_config = app_get_device_config();
-
-    if (app_mode_changed(prev_mode, current_mode) || app_config_changed(prev_config, current_config)) {
-        printf("Config changed from downlink, sending updated heartbeat\r\n");
-        SendHeartBeatPayload(current_mode, current_config, temperature);
-        LM_Delay(500, 0);
+    rslt = app_accel_configure_activity_interrupt(current_config.wake_thresh);
+    if (rslt != 0) {
+        printf("Error configuring activity interrupt: %d\r\n", rslt);
     }
 
-    if (app_rf_test_config_changed(prev_rf_config, app_get_rf_test_config())) {
-        printf("RF test config changed from downlink, sending confirmation\r\n");
-        SendRfTestConfigPayload();
-        LM_Delay(500, 0);
-    }
+    // app_accel_configure_no_motion_interrupt()/app_accel_configure_activity_interrupt()
+    // above enable GEN1/GEN2 unconditionally - both are actually only meaningful
+    // in specific modes (see SyncModeConfiguration), so
+    // explicitly (re-)sync everything mode-dependent (GEN1, GEN2, the
+    // calibration timer) here the same way a downlink-driven mode change does
+    // via RefreshModeAndConfig - a fresh boot never sees a "change" for that
+    // path to react to, so it needs this explicit initial call instead.
+    SyncModeConfiguration(current_mode);
 
-    if (current_mode == APP_MODE_RF_TEST) {
-        uint32_t cycle = 0;
-        bool rf_test_active = true;
+    // GEN1_INT (the no-motion interrupt) is an Advanced Interrupt - the BMA400's
+    // interrupt engine that serves it is disabled in low power/sleep mode, so
+    // the sensor must stay in BMA400_MODE_NORMAL continuously for it to work.
 
-        while (rf_test_active) {
-            struct AppRfTestConfig_s rf_cfg_before = app_get_rf_test_config();
-
-            printf("RF_TEST: tone on for %u ms (cycle=%lu)\r\n", RF_TEST_TONE_DURATION_MS, cycle);
-            SendLoRaModTestPayload();
-            LM_Delay(RF_TEST_TONE_DURATION_MS, 0);
-
-            // Config uplink stops the tone and opens a downlink window so the
-            // user can send SET_RF_TEST_CONFIG or SET_DEVICE_MODE.
-            // EEPROM is only read here, after a LoRaWAN TX — the only
-            // moment a downlink could have changed the mode.
-            printf("RF_TEST: config uplink (cycle=%lu)\r\n", cycle);
-            SendRfTestConfigPayload();
-            LM_Delay(500, 0);
-
-            if (app_rf_test_config_changed(rf_cfg_before, app_get_rf_test_config())) {
-                printf("RF_TEST: config updated via downlink, sending confirmation\r\n");
-                SendRfTestConfigPayload();
-                LM_Delay(500, 0);
-            }
-
-            if (app_get_device_mode() != APP_MODE_RF_TEST) {
-                rf_test_active = false;
-                break;
-            }
-            cycle++;
-        }
-        current_mode = app_get_device_mode();
-    }
-
-    if (current_mode == APP_MODE_OPERATION) {
-        EnterShutdownNoBMA(current_config);
-    } else {
-        EnterShutdownWithBMA(current_config);
-    }
+    // Run the first cycle immediately (heartbeat, downlink re-check, RF_TEST
+    // if applicable), then arm the recurring wall-clock-aligned schedule and hand
+    // off to the sequencer, which sleeps in STOP2 between scheduled/radio events.
+    RunScheduledAction();
+    struct AppConfig_s scheduled_config = app_get_device_config();
+    ScheduleAction(scheduled_config.sleep_time_minutes, scheduled_config.schedule_offset_minutes);
 
     while (1) {
-        print("This should never print...\r\n");
-        HAL_Delay(500);
+        MX_LoRaWAN_Process();
     }
 }

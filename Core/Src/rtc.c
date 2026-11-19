@@ -26,6 +26,8 @@ uint32_t g_rtc_bkup_dr0 = 0;
 uint32_t g_rtc_bkup_dr1 = 0;
 uint32_t g_rtc_inits = 0;
 uint8_t g_rtc_wut_restored = 0;
+uint32_t g_boot_bdcr = 0;
+uint32_t g_rtc_bdcr_after_init = 0;
 
 
 RTC_HandleTypeDef hrtc;
@@ -92,6 +94,11 @@ void MX_RTC_Init(void)
   g_rtc_bkup_dr1 = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR1);
   g_rtc_inits = (READ_BIT(RTC->ICSR, RTC_ICSR_INITS) != 0U) ? 1UL : 0UL;
   g_rtc_wut_restored = 0;
+
+  // Post-init snapshot: HAL_RTC_MspInit() (already run via HAL_RTC_Init()
+  // above) verifies LSE is ready and selected before returning, calling
+  // Error_Handler() itself otherwise - reaching here already implies success.
+  g_rtc_bdcr_after_init = RCC->BDCR;
   
   // DON'T restore WUT here - it starts counting immediately!
   // WUT should only be set right before entering shutdown mode
