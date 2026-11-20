@@ -132,6 +132,9 @@ int main(void)
     struct AppConfig_s scheduled_config = app_get_device_config();
     ScheduleAction(scheduled_config.sleep_time_minutes, scheduled_config.schedule_offset_minutes);
 
+    // Short LED flash every GPIO_ALIVE_BLINK_PERIOD_MS while idling in STOP2.
+    gpio_alive_blink_start();
+
     while (1) {
         MX_LoRaWAN_Process();
     }

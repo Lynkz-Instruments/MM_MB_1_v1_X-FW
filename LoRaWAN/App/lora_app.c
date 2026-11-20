@@ -1600,6 +1600,10 @@ void SyncModeConfiguration(AppMode_t mode)
 	SyncActivityInterruptEnable(mode);
 	SyncNoMotionInterruptEnable(mode);
 	SyncCalibrationTimerEnable(mode);
+
+	// Alive-blink burst length shows the mode: enum value + 1 pulses, so
+	// STORAGE (0) still blinks once.
+	gpio_alive_blink_set_count((uint8_t)mode + 1U);
 }
 
 static void ApplySyncedConfig(AppMode_t mode, struct AppConfig_s config)

@@ -43,6 +43,26 @@ void MX_GPIO_Init(void);
 void gpio_blink_led(uint8_t times, uint16_t delay_ms);
 void gpio_release_led(void);
 
+/* Alive blink: every GPIO_ALIVE_BLINK_PERIOD_MS while the device idles in
+ * STOP2, the LED flashes a burst of short pulses so a user can see the sensor
+ * is running and which mode it is in (see gpio_alive_blink_set_count()).
+ * Set GPIO_ALIVE_BLINK_PERIOD_MS to 0 to disable. */
+#define GPIO_ALIVE_BLINK_PERIOD_MS              (30000U)
+#define GPIO_ALIVE_BLINK_ON_MS                  (10U)
+#define GPIO_ALIVE_BLINK_GAP_MS                 (300U)  /* LED off between pulses of one burst */
+
+/**
+  * @brief  Starts the alive-blink UTIL_TIMERs. Call once from main(), after
+  *         MX_LoRaWAN_Init() (needs UTIL_TIMER initialised).
+  */
+void gpio_alive_blink_start(void);
+
+/**
+  * @brief  Sets how many pulses each alive-blink burst has. Takes effect at
+  *         the next burst. Safe to call before gpio_alive_blink_start().
+  */
+void gpio_alive_blink_set_count(uint8_t count);
+
 /**
   * @brief  True if this device is sitting on the test board - TB_DETECT_PIN
   *         is pulled HIGH by a 100kOhm resistor normally, and pulled LOW

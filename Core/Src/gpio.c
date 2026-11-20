@@ -1,4 +1,5 @@
 #include "gpio.h"
+#include "stm32_timer.h"
 
 /* LED_G is active-low on the MissMetal board (lit when PB1 is driven LOW) -
  * the opposite of TA's board. */
@@ -110,4 +111,71 @@ void gpio_release_test_board_detect(void)
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(TB_DETECT_GPIO_PORT, &GPIO_InitStruct);
+}
+
+/* Pulses per burst. Written from thread context (SyncModeConfiguration), read
+ * in the timer callbacks (RTC IRQ); a single byte, so no tearing. */
+static volatile uint8_t s_alive_blink_count = 1U;
+
+#if GPIO_ALIVE_BLINK_PERIOD_MS > 0
+/* The periodic timer starts a burst; the one-shot step timer then alternates
+ * LED on (GPIO_ALIVE_BLINK_ON_MS) / off (GPIO_ALIVE_BLINK_GAP_MS) until the
+ * burst's pulses are used up. Callbacks run from the RTC alarm IRQ and the
+ * GPIO output holds its level in STOP2, so the MCU sleeps between edges. */
+static UTIL_TIMER_Object_t s_alive_blink_timer;
+static UTIL_TIMER_Object_t s_alive_blink_step_timer;
+static uint8_t s_alive_blink_remaining;
+static bool s_alive_blink_led_on;
+
+static void AliveBlinkLedOn(void)
+{
+    HAL_GPIO_WritePin(LED_GPIO_PORT, LED_PIN, LED_ON_STATE);
+    s_alive_blink_led_on = true;
+    UTIL_TIMER_SetPeriod(&s_alive_blink_step_timer, GPIO_ALIVE_BLINK_ON_MS);
+    UTIL_TIMER_Start(&s_alive_blink_step_timer);
+}
+
+static void OnAliveBlinkStepEvent(void *context)
+{
+    (void)context;
+    if (s_alive_blink_led_on) {
+        HAL_GPIO_WritePin(LED_GPIO_PORT, LED_PIN, LED_OFF_STATE);
+        s_alive_blink_led_on = false;
+        if (s_alive_blink_remaining > 0U) {
+            s_alive_blink_remaining--;
+        }
+        if (s_alive_blink_remaining > 0U) {
+            UTIL_TIMER_SetPeriod(&s_alive_blink_step_timer, GPIO_ALIVE_BLINK_GAP_MS);
+            UTIL_TIMER_Start(&s_alive_blink_step_timer);
+        }
+    } else {
+        AliveBlinkLedOn();
+    }
+}
+
+static void OnAliveBlinkEvent(void *context)
+{
+    (void)context;
+    if (s_alive_blink_remaining > 0U) {
+        return;     /* previous burst still running (period shorter than a burst) */
+    }
+    s_alive_blink_remaining = s_alive_blink_count;
+    if (s_alive_blink_remaining > 0U) {
+        AliveBlinkLedOn();
+    }
+}
+#endif
+
+void gpio_alive_blink_start(void)
+{
+#if GPIO_ALIVE_BLINK_PERIOD_MS > 0
+    UTIL_TIMER_Create(&s_alive_blink_step_timer, GPIO_ALIVE_BLINK_ON_MS, UTIL_TIMER_ONESHOT, OnAliveBlinkStepEvent, NULL);
+    UTIL_TIMER_Create(&s_alive_blink_timer, GPIO_ALIVE_BLINK_PERIOD_MS, UTIL_TIMER_PERIODIC, OnAliveBlinkEvent, NULL);
+    UTIL_TIMER_Start(&s_alive_blink_timer);
+#endif
+}
+
+void gpio_alive_blink_set_count(uint8_t count)
+{
+    s_alive_blink_count = count;
 }
