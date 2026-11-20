@@ -223,9 +223,14 @@ static void OnSysTimeUpdate(void);
 	* @brief  Queue a DeviceTimeReq if the configured resync period has elapsed
 	*         since the last successful DeviceTimeAns. The request piggybacks
 	*         on the next uplink; no dedicated uplink is generated here.
+	* @param  scheduled_wake  true from the scheduled cycle: if the schedule
+	*         is slower than DEVICE_TIME_SYNC_PERIOD_MINUTES, resync on every
+	*         wake. false for event-driven uplinks (e.g. beacon motion pings):
+	*         always use the fixed period, so a burst of events can't trigger
+	*         a DeviceTimeAns downlink per uplink.
 	* @return true if a resync was actually queued this cycle.
 	*/
-static bool SyncDeviceTimeIfDue(void);
+static bool SyncDeviceTimeIfDue(bool scheduled_wake);
 
 /**
 	* @brief  Milliseconds from now until the next wall-clock boundary aligned
@@ -1080,7 +1085,7 @@ void LogSysTime(const char *label)
 			calTime.tm_hour, calTime.tm_min, calTime.tm_sec, abs(curTime.SubSeconds));
 }
 
-static bool SyncDeviceTimeIfDue(void)
+static bool SyncDeviceTimeIfDue(bool scheduled_wake)
 {
 	uint32_t last_sync = app_get_last_device_time_sync();
 
@@ -1091,7 +1096,7 @@ static bool SyncDeviceTimeIfDue(void)
 	 * time corrections, so it resyncs at every scheduled wake instead -
 	 * period_s=0 makes the "due" check below always pass. */
 	struct AppConfig_s cfg = app_get_device_config();
-	uint32_t period_s = (cfg.sleep_time_minutes > DEVICE_TIME_SYNC_PERIOD_MINUTES)
+	uint32_t period_s = (scheduled_wake && cfg.sleep_time_minutes > DEVICE_TIME_SYNC_PERIOD_MINUTES)
 			? 0UL
 			: (uint32_t)DEVICE_TIME_SYNC_PERIOD_MINUTES * 60UL;
 
@@ -1717,7 +1722,10 @@ void RunScheduledAction(void)
 	struct AppRfTestConfig_s prev_rf_config = app_get_rf_test_config();
 	static bool first_run = true;
 
-	bool sync_due = SyncDeviceTimeIfDue();
+	bool sync_due = SyncDeviceTimeIfDue(true);
+	// Set once an uplink below has carried the queued DeviceTimeReq, so the
+	// status payload isn't sent just to carry it.
+	bool sync_carried = false;
 
 	// Boot (first_run) only syncs time and reports status below - no
 	// beacon ping until the first real scheduled tick.
@@ -1734,6 +1742,7 @@ void RunScheduledAction(void)
 			printf("Beacon: periodic ping\r\n");
 			SendBeaconPayload(x_8mg, y_8mg, z_8mg);
 			LM_Delay(500, 0);
+			sync_carried = sync_due;	// DeviceTimeReq rode on this ping
 		}
 	}
 
@@ -1751,10 +1760,13 @@ void RunScheduledAction(void)
 	// occasional triggers.
 	bool status_periodic = (current_mode == APP_MODE_STORAGE)
 	                    || (current_mode == APP_MODE_OPERATION);
-	if (first_run || config_changed || sync_due || status_periodic) {
+	// A due resync only forces a status payload if nothing above already
+	// carried the DeviceTimeReq (BEACON's periodic ping does).
+	bool sync_needs_status = sync_due && !sync_carried;
+	if (first_run || config_changed || sync_needs_status || status_periodic) {
 		printf("Sending status payload (%s)\r\n",
 				first_run ? "boot" : config_changed ? "config changed" :
-				sync_due ? "sync" : "periodic heartbeat");
+				sync_needs_status ? "sync" : "periodic heartbeat");
 		SendStatusPayload(current_mode, current_config);
 		LM_Delay(500, 0);
 
@@ -1801,6 +1813,7 @@ void RunMotionStatusAction(void)
 			app_accel_measure_vibration_short_8mg(&x_8mg, &y_8mg, &z_8mg);
 
 			printf("Beacon: motion stopped, sending ping\r\n");
+			SyncDeviceTimeIfDue(false);	// resync rides on this ping when due
 			s_skip_tx_stagger = true;
 			SendBeaconPayload(x_8mg, y_8mg, z_8mg);
 			LM_Delay(500, 0);
@@ -1825,6 +1838,7 @@ void RunMotionStatusAction(void)
 		app_accel_measure_vibration_short_8mg(&x_8mg, &y_8mg, &z_8mg);
 
 		printf("Beacon: motion detected, sending ping\r\n");
+		SyncDeviceTimeIfDue(false);	// resync rides on this ping when due
 		s_skip_tx_stagger = true;
 		SendBeaconPayload(x_8mg, y_8mg, z_8mg);
 		LM_Delay(500, 0);

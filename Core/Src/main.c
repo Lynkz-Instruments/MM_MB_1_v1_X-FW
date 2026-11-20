@@ -29,12 +29,6 @@
 #include "utils.h"
 #include "stm32_systime.h"
 
-/* TESTING ONLY: uncomment to force a device mode at every boot. The mode is
- * written to EEPROM (the rest of the firmware reads it from there), so it
- * persists after this line is commented out again - switch back with a 0xA2
- * downlink or by forcing the original mode once. */
-// #define FORCE_DEVICE_MODE   APP_MODE_STORAGE
-
 int main(void)
 {
     HAL_Init();
@@ -82,13 +76,6 @@ int main(void)
         printf("EEPROM initialized successfully.\r\n");
         app_settings_init();
     }
-
-#ifdef FORCE_DEVICE_MODE
-    if (app_get_device_mode() != FORCE_DEVICE_MODE) {
-        printf("FORCE_DEVICE_MODE: overriding EEPROM mode\r\n");
-        app_set_device_mode(FORCE_DEVICE_MODE);
-    }
-#endif
 
     AppMode_t current_mode = app_get_device_mode();
     printf("Current device mode: %s\r\n",
