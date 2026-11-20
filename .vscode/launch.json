@@ -23,7 +23,14 @@
                 "monitor erase_mass",
                 "load",
                 "break main",
-                "set $pc = Reset_Handler",
+                // Real system reset (not just moving the PC), so RCC, I2C1, GPIO
+                // etc. start clean. DEMCR.VC_CORERESET makes the core halt at
+                // Reset_Handler; it is cleared right after so a later IWDG reset
+                // during the session runs normally instead of halting.
+                "set *(unsigned int *)0xE000EDFC = 0x01000001",
+                "set *(unsigned int *)0xE000ED0C = 0x05FA0004",
+                "set *(unsigned int *)0xE000EDFC = 0x01000000",
+                "flushregs",
                 // "continue"
             ]
         }

@@ -29,12 +29,19 @@
 #include "utils.h"
 #include "stm32_systime.h"
 
+/* TESTING ONLY: uncomment to force a device mode at every boot. The mode is
+ * written to EEPROM (the rest of the firmware reads it from there), so it
+ * persists after this line is commented out again - switch back with a 0xA2
+ * downlink or by forcing the original mode once. */
+// #define FORCE_DEVICE_MODE   APP_MODE_STORAGE
+
 int main(void)
 {
     HAL_Init();
     SystemClock_Config();
     MX_GPIO_Init();
     MX_DMA_Init();
+    bool i2c_was_stuck = i2c_BusRecover();  // before init: unstick SDA after a mid-transfer reset
     MX_I2C1_Init();
     MX_LoRaWAN_Init();                      //calls MX_RTC_Init()
     MX_USART2_UART_Init();
@@ -63,6 +70,9 @@ int main(void)
         reset_reason == RESET_REASON_BOR    ? "BOR (power-on / SHUTDOWN wake)" :
         reset_reason == RESET_REASON_PIN    ? "PIN"    : "NONE",
         (unsigned long)reset_flags);
+    if (i2c_was_stuck) {
+        printf("I2C bus was stuck (SDA held low) - recovered\r\n");
+    }
     gpio_blink_led(2, 50);
 
     rslt = app_eeprom_init();
@@ -72,6 +82,13 @@ int main(void)
         printf("EEPROM initialized successfully.\r\n");
         app_settings_init();
     }
+
+#ifdef FORCE_DEVICE_MODE
+    if (app_get_device_mode() != FORCE_DEVICE_MODE) {
+        printf("FORCE_DEVICE_MODE: overriding EEPROM mode\r\n");
+        app_set_device_mode(FORCE_DEVICE_MODE);
+    }
+#endif
 
     AppMode_t current_mode = app_get_device_mode();
     printf("Current device mode: %s\r\n",

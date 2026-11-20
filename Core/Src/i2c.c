@@ -22,6 +22,76 @@
 #include "app_errors.h"
 
 /* USER CODE BEGIN 0 */
+#define I2C1_SCL_PORT   GPIOB
+#define I2C1_SCL_PIN    GPIO_PIN_6
+#define I2C1_SDA_PORT   GPIOA
+#define I2C1_SDA_PIN    GPIO_PIN_10
+
+/* ~10-20 us at the 4 MHz MSI: well under the ~114 kHz bus speed, which is
+ * fine - I2C has no minimum clock rate. */
+static void i2c_RecoverDelay(void)
+{
+  for (volatile uint32_t i = 0; i < 10U; i++) { }
+}
+
+bool i2c_BusRecover(void)
+{
+  GPIO_InitTypeDef gpio = {0};
+  bool stuck;
+
+  /* Start from a clean peripheral: a debugger "set $pc = Reset_Handler" or
+   * any core-only restart leaves I2C1 enabled, possibly mid-transfer. */
+  __HAL_RCC_I2C1_FORCE_RESET();
+  __HAL_RCC_I2C1_RELEASE_RESET();
+
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+
+  /* Both lines as open-drain GPIO, released (high). Pre-load ODR first so
+   * neither line glitches low when switching to output. */
+  HAL_GPIO_WritePin(I2C1_SCL_PORT, I2C1_SCL_PIN, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(I2C1_SDA_PORT, I2C1_SDA_PIN, GPIO_PIN_SET);
+  gpio.Mode  = GPIO_MODE_OUTPUT_OD;
+  gpio.Pull  = GPIO_PULLUP;
+  gpio.Speed = GPIO_SPEED_FREQ_LOW;
+  gpio.Pin   = I2C1_SCL_PIN;
+  HAL_GPIO_Init(I2C1_SCL_PORT, &gpio);
+  gpio.Pin   = I2C1_SDA_PIN;
+  HAL_GPIO_Init(I2C1_SDA_PORT, &gpio);
+  i2c_RecoverDelay();
+
+  stuck = (HAL_GPIO_ReadPin(I2C1_SDA_PORT, I2C1_SDA_PIN) == GPIO_PIN_RESET);
+  if (stuck)
+  {
+    /* Clock out whatever byte the slave thinks it is still sending; it
+     * releases SDA once it reaches a bit that is 1 / the ACK slot. */
+    for (uint8_t i = 0; i < 9U; i++)
+    {
+      HAL_GPIO_WritePin(I2C1_SCL_PORT, I2C1_SCL_PIN, GPIO_PIN_RESET);
+      i2c_RecoverDelay();
+      HAL_GPIO_WritePin(I2C1_SCL_PORT, I2C1_SCL_PIN, GPIO_PIN_SET);
+      i2c_RecoverDelay();
+      if (HAL_GPIO_ReadPin(I2C1_SDA_PORT, I2C1_SDA_PIN) == GPIO_PIN_SET)
+      {
+        break;
+      }
+    }
+
+    /* STOP condition: SDA rises while SCL is high. */
+    HAL_GPIO_WritePin(I2C1_SCL_PORT, I2C1_SCL_PIN, GPIO_PIN_RESET);
+    i2c_RecoverDelay();
+    HAL_GPIO_WritePin(I2C1_SDA_PORT, I2C1_SDA_PIN, GPIO_PIN_RESET);
+    i2c_RecoverDelay();
+    HAL_GPIO_WritePin(I2C1_SCL_PORT, I2C1_SCL_PIN, GPIO_PIN_SET);
+    i2c_RecoverDelay();
+    HAL_GPIO_WritePin(I2C1_SDA_PORT, I2C1_SDA_PIN, GPIO_PIN_SET);
+    i2c_RecoverDelay();
+  }
+
+  /* Pins are left as released GPIO; HAL_I2C_MspInit() switches them back to
+   * the I2C1 alternate function. */
+  return stuck;
+}
 
 /* USER CODE END 0 */
 

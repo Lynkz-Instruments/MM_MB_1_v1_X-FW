@@ -87,6 +87,14 @@ extern "C" {
 #define LORAWAN_DEFAULT_DATA_RATE                   DR_0
 
 /*!
+ * Highest data rate SendTxData() may step up to when a payload doesn't fit at
+ * LORAWAN_DEFAULT_DATA_RATE (see DatarateForPayload in lora_app.c). DR_3 is the
+ * fastest US915 DR on the 125 kHz channels of sub-band 1; DR_4 would only be
+ * usable on the single 500 kHz channel 64.
+ */
+#define LORAWAN_MAX_UPLINK_DATA_RATE                DR_3
+
+/*!
  * LoRaWAN Default Tx output power
  * @note LORAWAN_DEFAULT_TX_POWER must be defined in the [XXXX_MIN_TX_POWER - XXXX_MAX_TX_POWER] range,
          else the end-device uses the XXXX_DEFAULT_TX_POWER value

@@ -27,6 +27,7 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32wlxx_hal.h"
+#include <stdbool.h>
 
 /* USER CODE BEGIN Includes */
 
@@ -46,6 +47,16 @@ void MX_I2C1_Init(void);
   *         retain I2Cx peripheral configuration. Mirrors vcom_Resume().
   */
 void i2c_Resume(void);
+
+/**
+  * @brief  I2C bus recovery - call before MX_I2C1_Init(). If a slave (BMA400
+  *         or EEPROM) is holding SDA low because the MCU was reset (IWDG,
+  *         debugger restart) in the middle of a transfer, clocks SCL by hand
+  *         until it lets go (max 9 pulses), then generates a STOP. Also resets
+  *         the I2C1 peripheral, which a core-only reset leaves configured.
+  * @return true if the bus was stuck and recovery was needed.
+  */
+bool i2c_BusRecover(void);
 
 /* USER CODE END Prototypes */
 

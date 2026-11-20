@@ -208,7 +208,20 @@ struct AppRfTestConfig_s app_get_rf_test_config(void)
 {
     struct AppRfTestConfig_s config = app_eeprom_read_rf_test_config();
     struct AppRfTestConfig_s before = config;
+
+    /* Blank (erased, all-0xFF) EEPROM: most fields are then out of range and
+     * fall back to defaults below, but power_dbm 0xFF reads as -1 dBm, which
+     * IS in range and would otherwise stick. */
+    const uint8_t *raw = (const uint8_t *)&before;
+    bool blank = true;
+    for (size_t i = 0; i < sizeof(before); i++) {
+        if (raw[i] != 0xFFU) { blank = false; break; }
+    }
+
     rf_test_config_apply_defaults(&config);
+    if (blank) {
+        config.power_dbm = RF_TEST_POWER_DEFAULT_DBM;
+    }
     if (config.frequency_hz != before.frequency_hz ||
         config.power_dbm    != before.power_dbm    ||
         config.bandwidth    != before.bandwidth     ||

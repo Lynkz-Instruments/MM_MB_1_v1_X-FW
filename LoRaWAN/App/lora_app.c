@@ -815,6 +815,30 @@ static void OnRxData(LmHandlerAppData_t *appData, LmHandlerRxParams_t *params)
 	/* USER CODE END OnRxData_1 */
 }
 
+/**
+	* @brief Lowest data rate, starting at LORAWAN_DEFAULT_DATA_RATE (best range)
+	*        and going no higher than LORAWAN_MAX_UPLINK_DATA_RATE, whose
+	*        regional max application payload (N) fits size bytes. Uses the
+	*        same RegionGetPhyParam(PHY_MAX_PAYLOAD) table the MAC validates
+	*        against. Pending MAC commands (FOpts) are not counted here - if
+	*        they don't fit alongside, SendTxData's existing flush-and-retry
+	*        handles it.
+	*/
+static int8_t DatarateForPayload(uint8_t size)
+{
+	GetPhyParams_t getPhy = { 0 };
+	getPhy.Attribute = PHY_MAX_PAYLOAD;
+	getPhy.UplinkDwellTime = 0; // no uplink dwell-time limit in US915
+
+	for (int8_t dr = LORAWAN_DEFAULT_DATA_RATE; dr <= LORAWAN_MAX_UPLINK_DATA_RATE; dr++) {
+		getPhy.Datarate = dr;
+		if (RegionGetPhyParam(ACTIVE_REGION, &getPhy).Value >= size) {
+			return dr;
+		}
+	}
+	return LORAWAN_MAX_UPLINK_DATA_RATE;
+}
+
 void SendTxData(void)
 {
     /* USER CODE BEGIN SendTxData_1 */
@@ -840,7 +864,12 @@ void SendTxData(void)
 	}
 	s_skip_tx_stagger = false;
 	LmHandlerSetTxPower(LORAWAN_DEFAULT_TX_POWER);
-	LmHandlerSetTxDatarate(LORAWAN_DEFAULT_DATA_RATE);
+	int8_t tx_dr = DatarateForPayload(AppData.BufferSize);
+	if (tx_dr != LORAWAN_DEFAULT_DATA_RATE) {
+		APP_LOG(TS_OFF, VLEVEL_M, "Payload %d B exceeds DR%d limit, sending at DR%d\r\n",
+				(int)AppData.BufferSize, (int)LORAWAN_DEFAULT_DATA_RATE, (int)tx_dr);
+	}
+	LmHandlerSetTxDatarate(tx_dr);
 
     // Up to 3 attempts, covering two independent reasons a naive single try
     // could silently lose this payload:
