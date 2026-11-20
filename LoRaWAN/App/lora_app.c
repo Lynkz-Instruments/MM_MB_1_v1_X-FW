@@ -40,6 +40,7 @@
 #include "app_settings.h"
 #include "app_accel.h"
 #include "LoRaMac.h"
+#include "LoRaMacCommands.h"
 #include "utils.h"
 #include "app_communication.h"
 #include "gpio.h"
@@ -823,21 +824,32 @@ static void OnRxData(LmHandlerAppData_t *appData, LmHandlerRxParams_t *params)
 /**
 	* @brief Lowest data rate, starting at LORAWAN_DEFAULT_DATA_RATE (best range)
 	*        and going no higher than LORAWAN_MAX_UPLINK_DATA_RATE, whose
-	*        regional max application payload (N) fits size bytes. Uses the
-	*        same RegionGetPhyParam(PHY_MAX_PAYLOAD) table the MAC validates
-	*        against. Pending MAC commands (FOpts) are not counted here - if
-	*        they don't fit alongside, SendTxData's existing flush-and-retry
-	*        handles it.
+	*        regional max application payload (N) fits size bytes plus the
+	*        MAC commands currently pending for FOpts (e.g. a DeviceTimeReq
+	*        queued this cycle) - the same "payload + FOpts <= N" check the
+	*        MAC applies, using the same RegionGetPhyParam(PHY_MAX_PAYLOAD)
+	*        table. Sizing for both keeps payload and MAC commands in one
+	*        frame instead of the MAC flushing an empty, MAC-only frame first.
 	*/
 static int8_t DatarateForPayload(uint8_t size)
 {
+	enum { FOPTS_MAX_LENGTH = 15 };	// LoRaWAN FOpts limit (private LORA_MAC_COMMAND_MAX_FOPTS_LENGTH in LoRaMac.c)
+	size_t mac_cmds_size = 0;
+	if (LoRaMacCommandsGetSizeSerializedCmds(&mac_cmds_size) != LORAMAC_COMMANDS_SUCCESS
+			|| mac_cmds_size > FOPTS_MAX_LENGTH) {
+		// Too big for FOpts: the MAC sends them on their own (port 0) anyway,
+		// so size for the application payload alone.
+		mac_cmds_size = 0;
+	}
+	uint32_t needed = (uint32_t)size + (uint32_t)mac_cmds_size;
+
 	GetPhyParams_t getPhy = { 0 };
 	getPhy.Attribute = PHY_MAX_PAYLOAD;
 	getPhy.UplinkDwellTime = 0; // no uplink dwell-time limit in US915
 
 	for (int8_t dr = LORAWAN_DEFAULT_DATA_RATE; dr <= LORAWAN_MAX_UPLINK_DATA_RATE; dr++) {
 		getPhy.Datarate = dr;
-		if (RegionGetPhyParam(ACTIVE_REGION, &getPhy).Value >= size) {
+		if (RegionGetPhyParam(ACTIVE_REGION, &getPhy).Value >= needed) {
 			return dr;
 		}
 	}
@@ -871,7 +883,7 @@ void SendTxData(void)
 	LmHandlerSetTxPower(LORAWAN_DEFAULT_TX_POWER);
 	int8_t tx_dr = DatarateForPayload(AppData.BufferSize);
 	if (tx_dr != LORAWAN_DEFAULT_DATA_RATE) {
-		APP_LOG(TS_OFF, VLEVEL_M, "Payload %d B exceeds DR%d limit, sending at DR%d\r\n",
+		APP_LOG(TS_OFF, VLEVEL_M, "Payload %d B (+ pending MAC cmds) exceeds DR%d limit, sending at DR%d\r\n",
 				(int)AppData.BufferSize, (int)LORAWAN_DEFAULT_DATA_RATE, (int)tx_dr);
 	}
 	LmHandlerSetTxDatarate(tx_dr);
